@@ -1,5 +1,5 @@
 name: projektpm
-description: "A new Flutter project."
+description: "A new Flutter project for Job Portal with Sensors and AI."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -9,11 +9,46 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # Database & Session 
+  sqflite: ^2.3.3+2          # Database lokal SQLite
+  path: ^1.9.0               # Path file database
+  shared_preferences: ^2.2.3 # Session login sederhana
+
+  # Keamanan & Auth 
+  crypto: ^3.0.3             # Hashing SHA-256 untuk password
+  local_auth: ^2.2.0         # Biometric 
+
+  # Web Service & AI 
+  http: ^1.2.1               # API Loker & Kurs
+  google_generative_ai: ^0.4.4 # AI Gemini
+
+  # Sensors & Magnetometer 
+  flutter_compass: ^0.7.0    # Magnetometer 
+  sensors_plus: ^5.0.1       # Accelerometer & Gyroscope
+  light: ^1.0.0              # Sensor Cahaya (Auto Dark Mode)
+
+  # LBS & Maps 
+  google_maps_flutter: ^2.6.1 # Google Maps
+  geolocator: ^12.0.0        # GPS (LBS)
+
+  # Notifikasi & Waktu 
+  flutter_local_notifications: ^17.1.2 # Alarm notifikasi
+  timezone: ^0.9.4                     # Zona waktu (London, WIB, dll)
+  intl: ^0.19.0                        # Format mata uang & tanggal
+
+  # State Management
+  provider: ^6.1.2           # Mengelola tema & data global
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^3.0.0      
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
