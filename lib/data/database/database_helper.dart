@@ -33,8 +33,9 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');
 
@@ -42,10 +43,11 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE wishlist (
         id TEXT PRIMARY KEY, 
-        title TEXT,
+        title TEXT NOT NULL,
         company TEXT,
         location TEXT,
-        salary TEXT
+        salary TEXT,
+        added_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');
 
@@ -53,10 +55,11 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE interviews (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        job_title TEXT,
-        company_name TEXT,
-        interview_time TEXT,
-        location_coords TEXT
+        job_title TEXT NOT NULL,
+        company_name TEXT NOT NULL,
+        interview_time TEXT NOT NULL,
+        location_coords TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');
   }
@@ -67,12 +70,26 @@ class DatabaseHelper {
     return sha256.convert(bytes).toString();
   }
 
+  // ========== USER AUTHENTICATION ==========
+
   // Register user baru
   Future<int> registerUser(String username, String password) async {
     final db = await database;
+    
+    // Cek apakah username sudah ada
+    List<Map<String, dynamic>> existing = await db.query(
+      'users',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+    
+    if (existing.isNotEmpty) {
+      throw Exception('Username sudah digunakan');
+    }
+    
     return await db.insert('users', {
       'username': username,
-      'password': _hashPassword(password), // Simpan hasil hash
+      'password': _hashPassword(password),
     });
   }
 
@@ -90,22 +107,97 @@ class DatabaseHelper {
     return res.isNotEmpty;
   }
 
-  // FUNGSI UNTUK WISHLIST 
+  // Get user data (optional, untuk profil)
+  Future<Map<String, dynamic>?> getUserByUsername(String username) async {
+    final db = await database;
+    List<Map<String, dynamic>> res = await db.query(
+      'users',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+    
+    return res.isNotEmpty ? res.first : null;
+  }
+
+  // ========== WISHLIST FUNCTIONS ==========
 
   Future<int> addToWishlist(Map<String, dynamic> job) async {
     final db = await database;
-    return await db.insert('wishlist', job, conflictAlgorithm: ConflictAlgorithm.replace);
+    return await db.insert(
+      'wishlist', 
+      job, 
+      conflictAlgorithm: ConflictAlgorithm.replace
+    );
   }
 
   Future<List<Map<String, dynamic>>> getWishlist() async {
     final db = await database;
-    return await db.query('wishlist');
+    return await db.query('wishlist', orderBy: 'added_at DESC');
   }
 
-  // FUNGSI UNTUK JADWAL
+  Future<int> removeFromWishlist(String jobId) async {
+    final db = await database;
+    return await db.delete(
+      'wishlist',
+      where: 'id = ?',
+      whereArgs: [jobId],
+    );
+  }
+
+  Future<bool> isInWishlist(String jobId) async {
+    final db = await database;
+    List<Map<String, dynamic>> res = await db.query(
+      'wishlist',
+      where: 'id = ?',
+      whereArgs: [jobId],
+    );
+    return res.isNotEmpty;
+  }
+
+  // ========== INTERVIEW SCHEDULE FUNCTIONS ==========
 
   Future<int> addInterview(Map<String, dynamic> interview) async {
     final db = await database;
     return await db.insert('interviews', interview);
+  }
+
+  Future<List<Map<String, dynamic>>> getAllInterviews() async {
+    final db = await database;
+    return await db.query('interviews', orderBy: 'interview_time ASC');
+  }
+
+  Future<int> updateInterview(int id, Map<String, dynamic> interview) async {
+    final db = await database;
+    return await db.update(
+      'interviews',
+      interview,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deleteInterview(int id) async {
+    final db = await database;
+    return await db.delete(
+      'interviews',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== UTILITY FUNCTIONS ==========
+
+  // Clear all data (untuk testing)
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.delete('users');
+    await db.delete('wishlist');
+    await db.delete('interviews');
+  }
+
+  // Close database
+  Future<void> close() async {
+    final db = await database;
+    await db.close();
   }
 }

@@ -25,7 +25,7 @@ dependencies:
   google_generative_ai: ^0.4.4 # AI Gemini
 
   # Sensors & Magnetometer 
-  flutter_compass: ^0.7.0    # Magnetometer 
+  flutter_compass: ^0.8.1    # Magnetometer 
   sensors_plus: ^5.0.1       # Accelerometer & Gyroscope
   light: ^5.0.0              # Sensor Cahaya (Auto Dark Mode)
 
