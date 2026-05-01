@@ -27,11 +27,12 @@ dependencies:
   # Sensors & Magnetometer 
   flutter_compass: ^0.7.0    # Magnetometer 
   sensors_plus: ^5.0.1       # Accelerometer & Gyroscope
-  light: ^1.0.0              # Sensor Cahaya (Auto Dark Mode)
+  light: ^5.0.0              # Sensor Cahaya (Auto Dark Mode)
 
   # LBS & Maps 
   google_maps_flutter: ^2.6.1 # Google Maps
   geolocator: ^12.0.0        # GPS (LBS)
+  permission_handler: ^11.3.1
 
   # Notifikasi & Waktu 
   flutter_local_notifications: ^17.1.2 # Alarm notifikasi
