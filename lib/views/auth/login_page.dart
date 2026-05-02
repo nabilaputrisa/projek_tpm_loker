@@ -16,7 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   final _dbHelper = DatabaseHelper();
   final LocalAuthentication _auth = LocalAuthentication();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _isRegisterMode = false; // Toggle antara Login dan Register
@@ -73,11 +73,11 @@ class _LoginPageState extends State<LoginPage> {
         _usernameController.text.trim(),
         _passwordController.text,
       );
-      
+
       if (!mounted) return;
-      
+
       _showSnackBar("✓ Registrasi Berhasil! Silakan Login.");
-      
+
       // Reset form dan switch ke mode login
       setState(() {
         _isRegisterMode = false;
@@ -115,8 +115,11 @@ class _LoginPageState extends State<LoginPage> {
       if (success) {
         // Simpan username ke SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('logged_username', _usernameController.text.trim());
-        
+        await prefs.setString(
+          'logged_username',
+          _usernameController.text.trim(),
+        );
+
         // Cek apakah 2FA aktif
         bool isTwoStepActive = prefs.getBool('two_step_auth') ?? false;
 
@@ -172,10 +175,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar(
-        "Error biometrik: ${e.toString()}",
-        isError: true,
-      );
+      _showSnackBar("Error biometrik: ${e.toString()}", isError: true);
       // Tetap arahkan ke home jika biometric error
       _navigateToHome();
     }
@@ -185,9 +185,9 @@ class _LoginPageState extends State<LoginPage> {
   void _navigateToHome() {
     // TODO: Ganti dengan route home page Anda
     // Contoh: Navigator.pushReplacementNamed(context, '/home');
-    
+
     _showSnackBar("✓ Login Berhasil! Selamat Datang.");
-    
+
     // Sementara untuk testing, tampilkan dialog
     showDialog(
       context: context,
@@ -239,7 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  
+
                   // Title
                   Text(
                     _isRegisterMode ? "Buat Akun Baru" : "Career Portal",
@@ -251,16 +251,13 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _isRegisterMode 
-                        ? "Daftar untuk memulai" 
+                    _isRegisterMode
+                        ? "Daftar untuk memulai"
                         : "Temukan karir impianmu",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue[700],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.blue[700]),
                   ),
                   const SizedBox(height: 40),
-                  
+
                   // Input Username
                   TextFormField(
                     controller: _usernameController,
@@ -281,7 +278,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                        borderSide: BorderSide(
+                          color: Colors.blue.shade700,
+                          width: 2,
+                        ),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -290,7 +290,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Input Password
                   TextFormField(
                     controller: _passwordController,
@@ -300,7 +300,9 @@ class _LoginPageState extends State<LoginPage> {
                       prefixIcon: Icon(Icons.lock, color: Colors.blue[700]),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: Colors.blue[700],
                         ),
                         onPressed: () {
@@ -321,7 +323,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+                        borderSide: BorderSide(
+                          color: Colors.blue.shade700,
+                          width: 2,
+                        ),
                       ),
                       errorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
@@ -336,8 +341,8 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _isLoading 
-                          ? null 
+                      onPressed: _isLoading
+                          ? null
                           : (_isRegisterMode ? _handleRegister : _handleLogin),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue[700],
@@ -368,20 +373,20 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Toggle Login/Register
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _isRegisterMode 
-                            ? "Sudah punya akun? " 
+                        _isRegisterMode
+                            ? "Sudah punya akun? "
                             : "Belum punya akun? ",
                         style: TextStyle(color: Colors.grey[700]),
                       ),
                       TextButton(
-                        onPressed: _isLoading 
-                            ? null 
+                        onPressed: _isLoading
+                            ? null
                             : () {
                                 setState(() {
                                   _isRegisterMode = !_isRegisterMode;
