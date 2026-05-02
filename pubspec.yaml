@@ -21,7 +21,7 @@ dependencies:
   local_auth: ^2.2.0         # Biometric 
 
   # Web Service & AI 
-  http: ^1.2.1               # API Loker & Kurs
+  http: ^1.6.0               # API Loker & Kurs
   google_generative_ai: ^0.4.4 # AI Gemini
 
   # Sensors & Magnetometer 
@@ -40,7 +40,7 @@ dependencies:
   intl: ^0.19.0                        # Format mata uang & tanggal
 
   # State Management
-  provider: ^6.1.2           # Mengelola tema & data global
+  provider: ^6.1.5+1           # Mengelola tema & data global
 
 dev_dependencies:
   flutter_test:
