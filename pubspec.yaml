@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
+  readmore: ^3.0.0
 
   # Database & Session 
   sqflite: ^2.3.3+2          # Database lokal SQLite

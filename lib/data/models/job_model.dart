@@ -197,4 +197,6 @@ class JobModel {
 
   @override
   int get hashCode => id.hashCode;
+
+  String get currencyCode => '';
 }

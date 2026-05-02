@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:projektpm/views/home/job_detail_page.dart';
 import 'package:provider/provider.dart';
 import '../../providers/job_provider.dart';
 import '../../data/services/api_job_service.dart';
 import '../../widgets/job_card.dart';
+
 
 // Import halaman-halaman lain
 import '../tools/ai_consultant_page.dart';
@@ -524,28 +526,31 @@ class _HomeTabState extends State<HomeTab> {
                       final isInWishlist = jobProvider.isInWishlist(job.id);
 
                       return JobCard(
-                        job: job,
-                        isInWishlist: isInWishlist,
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content: Text('Detail: ${job.title}')),
-                          );
-                        },
-                        onWishlistTap: () {
-                          jobProvider.toggleWishlist(job);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                isInWishlist
-                                    ? 'Removed from wishlist'
-                                    : 'Added to wishlist',
-                              ),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                        },
-                      );
+  job: job, // Objek job dari JobModel[cite: 1]
+  isInWishlist: isInWishlist,
+  onTap: () {
+    // Navigasi ke halaman JobDetailPage yang baru
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => JobDetailPage(job: job),
+      ),
+    );
+  },
+  onWishlistTap: () {
+    jobProvider.toggleWishlist(job);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isInWishlist
+              ? 'Removed from wishlist'
+              : 'Added to wishlist',
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  },
+);
                     },
                   ),
                 );
