@@ -20,12 +20,15 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), 'job_portal.db');
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    return await openDatabase(
+      path,
+      version: 2, // ← naik versi agar onUpgrade jalan
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
-  // Membuat tabel-tabel yang dibutuhkan
   Future<void> _onCreate(Database db, int version) async {
-    // 1. Tabel User untuk Login
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,19 +38,19 @@ class DatabaseHelper {
       )
     ''');
 
-    // 2. Tabel Wishlist untuk simpan lowongan
     await db.execute('''
       CREATE TABLE wishlist (
-        id TEXT PRIMARY KEY, 
+        id TEXT PRIMARY KEY,
         title TEXT NOT NULL,
         company TEXT,
         location TEXT,
         salary TEXT,
+        category TEXT,
+        contract_type TEXT,
         added_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');
 
-    // 3. Tabel Jadwal Interview
     await db.execute('''
       CREATE TABLE interviews (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,62 +63,52 @@ class DatabaseHelper {
     ''');
   }
 
-  // Hash password menggunakan SHA-256
+  // Migrasi dari v1 → v2: tambah kolom baru ke wishlist
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE wishlist ADD COLUMN category TEXT');
+      await db.execute('ALTER TABLE wishlist ADD COLUMN contract_type TEXT');
+    }
+  }
+
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
     return sha256.convert(bytes).toString();
   }
 
-  // ========== USER AUTHENTICATION ==========
+  // ========== USER AUTH ==========
 
-  // Register user baru
   Future<int> registerUser(String username, String password) async {
     final db = await database;
-
-    // Cek apakah username sudah ada
     List<Map<String, dynamic>> existing = await db.query(
       'users',
       where: 'username = ?',
       whereArgs: [username],
     );
-
-    if (existing.isNotEmpty) {
-      throw Exception('Username sudah digunakan');
-    }
-
+    if (existing.isNotEmpty) throw Exception('Username sudah digunakan');
     return await db.insert('users', {
       'username': username,
       'password': _hashPassword(password),
     });
   }
 
-  // Login check
   Future<bool> loginUser(String username, String password) async {
     final db = await database;
-    String hashedInput = _hashPassword(password);
-
-    List<Map<String, dynamic>> res = await db.query(
+    final res = await db.query(
       'users',
       where: 'username = ? AND password = ?',
-      whereArgs: [username, hashedInput],
+      whereArgs: [username, _hashPassword(password)],
     );
-
     return res.isNotEmpty;
   }
 
-  // Get user data (optional, untuk profil)
   Future<Map<String, dynamic>?> getUserByUsername(String username) async {
     final db = await database;
-    List<Map<String, dynamic>> res = await db.query(
-      'users',
-      where: 'username = ?',
-      whereArgs: [username],
-    );
-
+    final res = await db.query('users', where: 'username = ?', whereArgs: [username]);
     return res.isNotEmpty ? res.first : null;
   }
 
-  // ========== WISHLIST FUNCTIONS ==========
+  // ========== WISHLIST ==========
 
   Future<int> addToWishlist(Map<String, dynamic> job) async {
     final db = await database;
@@ -138,15 +131,11 @@ class DatabaseHelper {
 
   Future<bool> isInWishlist(String jobId) async {
     final db = await database;
-    List<Map<String, dynamic>> res = await db.query(
-      'wishlist',
-      where: 'id = ?',
-      whereArgs: [jobId],
-    );
+    final res = await db.query('wishlist', where: 'id = ?', whereArgs: [jobId]);
     return res.isNotEmpty;
   }
 
-  // ========== INTERVIEW SCHEDULE FUNCTIONS ==========
+  // ========== INTERVIEW ==========
 
   Future<int> addInterview(Map<String, dynamic> interview) async {
     final db = await database;
@@ -160,12 +149,7 @@ class DatabaseHelper {
 
   Future<int> updateInterview(int id, Map<String, dynamic> interview) async {
     final db = await database;
-    return await db.update(
-      'interviews',
-      interview,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.update('interviews', interview, where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int> deleteInterview(int id) async {
@@ -173,9 +157,8 @@ class DatabaseHelper {
     return await db.delete('interviews', where: 'id = ?', whereArgs: [id]);
   }
 
-  // ========== UTILITY FUNCTIONS ==========
+  // ========== UTILITY ==========
 
-  // Clear all data (untuk testing)
   Future<void> clearAllData() async {
     final db = await database;
     await db.delete('users');
@@ -183,7 +166,6 @@ class DatabaseHelper {
     await db.delete('interviews');
   }
 
-  // Close database
   Future<void> close() async {
     final db = await database;
     await db.close();

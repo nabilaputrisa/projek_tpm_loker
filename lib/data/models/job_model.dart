@@ -30,7 +30,7 @@ class JobModel {
     this.createdAt,
     required this.redirectUrl,
     this.latitude,
-    this.longitude,
+    this.longitude, required String salaryDisplay,
   });
 
   // ─── Factory: Parse dari JSON Adzuna API ───────────────────────────────────
@@ -54,7 +54,7 @@ class JobModel {
           : null,
       redirectUrl: json['redirect_url'] ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
-      longitude: (json['longitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(), salaryDisplay: '',
     );
   }
 
@@ -149,7 +149,7 @@ class JobModel {
           : null,
       redirectUrl: map['redirect_url'] ?? '',
       latitude: (map['latitude'] as num?)?.toDouble(),
-      longitude: (map['longitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(), salaryDisplay: '',
     );
   }
 
@@ -184,7 +184,7 @@ class JobModel {
       createdAt: createdAt ?? this.createdAt,
       redirectUrl: redirectUrl ?? this.redirectUrl,
       latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
+      longitude: longitude ?? this.longitude, salaryDisplay: '',
     );
   }
 

@@ -1,34 +1,28 @@
 import 'package:flutter/material.dart';
 import '../data/models/job_model.dart';
-import '../data/services/api_job_service.dart'; // Class SalaryRange diambil dari sini
+import '../data/services/api_job_service.dart';
 import '../data/database/database_helper.dart';
 
 class JobProvider with ChangeNotifier {
   final ApiJobService _apiService = ApiJobService();
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  // State
   List<JobModel> _jobs = [];
   List<JobModel> _wishlist = [];
   bool _isLoading = false;
   String? _errorMessage;
-  
-  // Pagination
+
   int _currentPage = 1;
   int _totalPages = 1;
   int _totalJobs = 0;
 
-  // Filter & Search
   String _searchQuery = '';
   String _selectedLocation = 'Semua Lokasi';
   String _selectedCategory = 'Semua Kategori';
   String _sortBy = 'date';
-  
-  // Field Baru
-  String _selectedCountry = 'sg'; 
-  SalaryRange? _selectedSalaryRange; 
+  String _selectedCountry = 'sg';
+  SalaryRange? _selectedSalaryRange;
 
-  // Getters
   List<JobModel> get jobs => _jobs;
   List<JobModel> get wishlist => _wishlist;
   bool get isLoading => _isLoading;
@@ -45,7 +39,6 @@ class JobProvider with ChangeNotifier {
   String get selectedCountry => _selectedCountry;
   SalaryRange? get selectedSalaryRange => _selectedSalaryRange;
 
-  /// Fetch jobs dari API
   Future<void> fetchJobs({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
@@ -63,9 +56,10 @@ class JobProvider with ChangeNotifier {
         category: _selectedCategory == 'Semua Kategori' ? null : _selectedCategory,
         page: _currentPage,
         sortBy: _sortBy,
-        countryCode: _selectedCountry, // Menggunakan parameter countryCode agar sinkron dengan ApiJobService
+        countryCode: _selectedCountry,
         salaryMin: _selectedSalaryRange?.min,
-        salaryMax: _selectedSalaryRange?.max, country: '',
+        salaryMax: _selectedSalaryRange?.max,
+        country: '',
       );
 
       if (result['success'] == true) {
@@ -74,7 +68,6 @@ class JobProvider with ChangeNotifier {
         } else {
           _jobs.addAll(result['jobs']);
         }
-        
         _totalJobs = result['total'];
         _totalPages = result['totalPages'];
         _errorMessage = null;
@@ -89,7 +82,6 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Load more jobs (pagination)
   Future<void> loadMore() async {
     if (!_isLoading && hasMore) {
       _currentPage++;
@@ -138,27 +130,31 @@ class JobProvider with ChangeNotifier {
     _selectedLocation = 'Semua Lokasi';
     _selectedCategory = 'Semua Kategori';
     _sortBy = 'date';
-    _selectedCountry = 'sg'; 
-    _selectedSalaryRange = null; 
+    _selectedCountry = 'sg';
+    _selectedSalaryRange = null;
     notifyListeners();
   }
 
-  // ========== WISHLIST FUNCTIONS ==========
+  // ========== WISHLIST ==========
 
   Future<void> loadWishlist() async {
     try {
-      final data = await _dbHelper.getWishlist();
-      _wishlist = data.map((json) {
-        return JobModel(
-          id: json['id'],
-          title: json['title'],
-          company: json['company'],
-          location: json['location'],
-          description: '',
-          createdAt: DateTime.now(),
-          redirectUrl: '',
-        );
-      }).toList();
+      final rows = await _dbHelper.getWishlist();
+      _wishlist = rows.map((row) => JobModel(
+        id: row['id'] as String,
+        title: row['title'] as String,
+        company: (row['company'] as String?) ?? '',
+        location: (row['location'] as String?) ?? '',
+        description: '',
+        createdAt: DateTime.now(),
+        redirectUrl: '',
+        // salary kolom di DB disimpan sebagai string display
+        salaryMin: null,
+        salaryMax: null,
+        salaryDisplay: (row['salary'] as String?) ?? 'Gaji tidak tersedia',
+        category: row['category'] as String?,
+        contractType: row['contract_type'] as String?,
+      )).toList();
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading wishlist: $e');
@@ -175,7 +171,16 @@ class JobProvider with ChangeNotifier {
         await _dbHelper.removeFromWishlist(job.id);
         _wishlist.removeWhere((j) => j.id == job.id);
       } else {
-        await _dbHelper.addToWishlist(job.toMap());
+        // Simpan hanya kolom yang ada di tabel wishlist SQLite
+        await _dbHelper.addToWishlist({
+          'id': job.id,
+          'title': job.title,
+          'company': job.company,
+          'location': job.location,
+          'salary': job.salaryDisplay,
+          'category': job.category,
+          'contract_type': job.contractType,
+        });
         _wishlist.add(job);
       }
       notifyListeners();
@@ -185,10 +190,14 @@ class JobProvider with ChangeNotifier {
   }
 
   Future<void> clearWishlist() async {
-    for (var job in _wishlist) {
-      await _dbHelper.removeFromWishlist(job.id);
+    try {
+      for (var job in _wishlist) {
+        await _dbHelper.removeFromWishlist(job.id);
+      }
+      _wishlist.clear();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error clearing wishlist: $e');
     }
-    _wishlist.clear();
-    notifyListeners();
   }
 }

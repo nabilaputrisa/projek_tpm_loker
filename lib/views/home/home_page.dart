@@ -5,9 +5,10 @@ import '../../data/services/api_job_service.dart';
 import '../../widgets/job_card.dart';
 
 // Import halaman-halaman lain
-import '../tools/ai_consultant_page.dart'; // Ganti dengan path yang sesuai
+import '../tools/ai_consultant_page.dart';
 import '../games/memory_match_game.dart';
-// import '../views/interview_schedule_page.dart'; // Ganti dengan path yang sesuai
+import '../profile/profile_page.dart';    // ← TAMBAHAN
+import '../profile/saved_jobs_page.dart'; // ← TAMBAHAN
 
 // ─── Main Navigation Shell ────────────────────────────────────────────────────
 
@@ -23,9 +24,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   final List<Widget> _pages = const [
     HomeTab(),
-    AiConsultantPage(),      // AI Career Assistant (dari ai_consultant_page.dart)
-    InterviewSchedulePage(), // Jadwal Interview — ganti dengan import yang sesuai
-    MemoryMatchGame(),       // Memory Game (dari memory_match_game.dart)
+    AiConsultantPage(),
+    InterviewSchedulePage(),
+    MemoryMatchGame(),
   ];
 
   @override
@@ -139,8 +140,7 @@ class _NavItem extends StatelessWidget {
               child: Icon(
                 isActive ? activeIcon : icon,
                 key: ValueKey(isActive),
-                color:
-                    isActive ? const Color(0xFF5E35B1) : Colors.grey[500],
+                color: isActive ? const Color(0xFF5E35B1) : Colors.grey[500],
                 size: 24,
               ),
             ),
@@ -149,10 +149,8 @@ class _NavItem extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight:
-                    isActive ? FontWeight.w600 : FontWeight.normal,
-                color:
-                    isActive ? const Color(0xFF5E35B1) : Colors.grey[500],
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                color: isActive ? const Color(0xFF5E35B1) : Colors.grey[500],
               ),
             ),
           ],
@@ -163,7 +161,6 @@ class _NavItem extends StatelessWidget {
 }
 
 // ─── Placeholder untuk InterviewSchedulePage ──────────────────────────────────
-// Hapus class ini dan ganti dengan import dari file yang sesuai
 
 class InterviewSchedulePage extends StatelessWidget {
   const InterviewSchedulePage({super.key});
@@ -209,7 +206,7 @@ class InterviewSchedulePage extends StatelessWidget {
   }
 }
 
-// ─── Home Tab (konten dari HomePage yang lama) ────────────────────────────────
+// ─── Home Tab ─────────────────────────────────────────────────────────────────
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -276,19 +273,23 @@ class _HomeTabState extends State<HomeTab> {
         ),
         elevation: 0,
         actions: [
+          // ── Wishlist → SavedJobsPage ──────────────────────────
           IconButton(
             icon: const Icon(Icons.bookmark, color: Colors.white),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Fitur Wishlist (Coming Soon)')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SavedJobsPage()),
               );
             },
           ),
+          // ── Profile → ProfilePage ─────────────────────────────
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Fitur Profile (Coming Soon)')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
               );
             },
           ),
@@ -296,7 +297,7 @@ class _HomeTabState extends State<HomeTab> {
       ),
       body: Column(
         children: [
-          // ─── Search Bar & Filter ────────────────────────────────────────
+          // ─── Search Bar & Filter ──────────────────────────────
           Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -357,12 +358,8 @@ class _HomeTabState extends State<HomeTab> {
                             ),
                           ),
                           onSubmitted: (value) {
-                            context
-                                .read<JobProvider>()
-                                .setSearchQuery(value);
-                            context
-                                .read<JobProvider>()
-                                .fetchJobs(refresh: true);
+                            context.read<JobProvider>().setSearchQuery(value);
+                            context.read<JobProvider>().fetchJobs(refresh: true);
                           },
                         ),
                       ),
@@ -374,8 +371,7 @@ class _HomeTabState extends State<HomeTab> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.tune,
-                            color: Color(0xFF5E35B1)),
+                        icon: const Icon(Icons.tune, color: Color(0xFF5E35B1)),
                         onPressed: _showFilterBottomSheet,
                         tooltip: 'Filter',
                       ),
@@ -384,7 +380,7 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 const SizedBox(height: 10),
 
-                // ─── Active Filter Chips ────────────────────────────────
+                // ─── Active Filter Chips ──────────────────────────
                 Consumer<JobProvider>(
                   builder: (context, provider, _) {
                     final country =
@@ -416,8 +412,7 @@ class _HomeTabState extends State<HomeTab> {
                             ),
                           if (provider.selectedSalaryRange != null)
                             _FilterChip(
-                              label:
-                                  '💰 ${provider.selectedSalaryRange!.label}',
+                              label: '💰 ${provider.selectedSalaryRange!.label}',
                               onRemove: () {
                                 provider.setSalaryRange(null);
                                 provider.applyFilters();
@@ -442,14 +437,13 @@ class _HomeTabState extends State<HomeTab> {
             ),
           ),
 
-          // ─── Job List ───────────────────────────────────────────────────
+          // ─── Job List ─────────────────────────────────────────
           Expanded(
             child: Consumer<JobProvider>(
               builder: (context, jobProvider, child) {
                 if (jobProvider.isLoading && jobProvider.jobs.isEmpty) {
                   return const Center(
-                    child: CircularProgressIndicator(
-                        color: Color(0xFF5E35B1)),
+                    child: CircularProgressIndicator(color: Color(0xFF5E35B1)),
                   );
                 }
 
@@ -465,8 +459,8 @@ class _HomeTabState extends State<HomeTab> {
                         Text(
                           jobProvider.errorMessage!,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: Colors.grey[600], fontSize: 14),
+                          style:
+                              TextStyle(color: Colors.grey[600], fontSize: 14),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
@@ -511,8 +505,7 @@ class _HomeTabState extends State<HomeTab> {
                       jobProvider.fetchJobs(refresh: true),
                   child: ListView.builder(
                     controller: _scrollController,
-                    padding:
-                        const EdgeInsets.only(top: 8, bottom: 16),
+                    padding: const EdgeInsets.only(top: 8, bottom: 16),
                     itemCount: jobProvider.jobs.length + 1,
                     itemBuilder: (context, index) {
                       if (index == jobProvider.jobs.length) {
@@ -528,8 +521,7 @@ class _HomeTabState extends State<HomeTab> {
                       }
 
                       final job = jobProvider.jobs[index];
-                      final isInWishlist =
-                          jobProvider.isInWishlist(job.id);
+                      final isInWishlist = jobProvider.isInWishlist(job.id);
 
                       return JobCard(
                         job: job,
@@ -595,8 +587,7 @@ class _FilterChip extends StatelessWidget {
             const SizedBox(width: 4),
             GestureDetector(
               onTap: onRemove,
-              child:
-                  const Icon(Icons.close, color: Colors.white, size: 14),
+              child: const Icon(Icons.close, color: Colors.white, size: 14),
             ),
           ],
         ],
