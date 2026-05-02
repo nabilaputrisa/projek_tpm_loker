@@ -5,13 +5,18 @@ plugins {
 }
 
 android {
+
     namespace = "com.example.projektpm"
+
     compileSdk = flutter.compileSdkVersion
+
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-  
-        isCoreLibraryDesugaringEnabled = true 
+
+        // DESUGARING
+        isCoreLibraryDesugaringEnabled = true
+
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -21,20 +26,29 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.projektpm"
-        
-        minSdk = flutter.minSdkVersion 
-        
+
+        // APPLICATION ID
+        applicationId = "com.example.google_maps_in_flutter"
+
+        // MIN SDK GOOGLE MAPS
+        minSdk = flutter.minSdkVersion
+
         targetSdk = flutter.targetSdkVersion
+
         versionCode = flutter.versionCode
+
         versionName = flutter.versionName
-        
+
+        // MULTIDEX
         multiDexEnabled = true
     }
 
     buildTypes {
+
         release {
-            signingConfig = signingConfigs.getByName("debug")
+
+            signingConfig =
+                signingConfigs.getByName("debug")
         }
     }
 }
@@ -45,5 +59,8 @@ flutter {
 
 dependencies {
 
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
+    // DESUGARING LIBRARY
+    coreLibraryDesugaring(
+        "com.android.tools:desugar_jdk_libs:2.0.3"
+    )
 }
