@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:crypto/crypto.dart'; 
+import 'package:crypto/crypto.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -20,16 +20,12 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), 'job_portal.db');
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _onCreate,
-    );
+    return await openDatabase(path, version: 1, onCreate: _onCreate);
   }
 
   // Membuat tabel-tabel yang dibutuhkan
   Future<void> _onCreate(Database db, int version) async {
-    // 1. Tabel User untuk Login 
+    // 1. Tabel User untuk Login
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -66,7 +62,7 @@ class DatabaseHelper {
 
   // Hash password menggunakan SHA-256
   String _hashPassword(String password) {
-    var bytes = utf8.encode(password); 
+    var bytes = utf8.encode(password);
     return sha256.convert(bytes).toString();
   }
 
@@ -75,18 +71,18 @@ class DatabaseHelper {
   // Register user baru
   Future<int> registerUser(String username, String password) async {
     final db = await database;
-    
+
     // Cek apakah username sudah ada
     List<Map<String, dynamic>> existing = await db.query(
       'users',
       where: 'username = ?',
       whereArgs: [username],
     );
-    
+
     if (existing.isNotEmpty) {
       throw Exception('Username sudah digunakan');
     }
-    
+
     return await db.insert('users', {
       'username': username,
       'password': _hashPassword(password),
@@ -97,13 +93,13 @@ class DatabaseHelper {
   Future<bool> loginUser(String username, String password) async {
     final db = await database;
     String hashedInput = _hashPassword(password);
-    
+
     List<Map<String, dynamic>> res = await db.query(
       'users',
       where: 'username = ? AND password = ?',
       whereArgs: [username, hashedInput],
     );
-    
+
     return res.isNotEmpty;
   }
 
@@ -115,7 +111,7 @@ class DatabaseHelper {
       where: 'username = ?',
       whereArgs: [username],
     );
-    
+
     return res.isNotEmpty ? res.first : null;
   }
 
@@ -124,9 +120,9 @@ class DatabaseHelper {
   Future<int> addToWishlist(Map<String, dynamic> job) async {
     final db = await database;
     return await db.insert(
-      'wishlist', 
-      job, 
-      conflictAlgorithm: ConflictAlgorithm.replace
+      'wishlist',
+      job,
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
@@ -137,11 +133,7 @@ class DatabaseHelper {
 
   Future<int> removeFromWishlist(String jobId) async {
     final db = await database;
-    return await db.delete(
-      'wishlist',
-      where: 'id = ?',
-      whereArgs: [jobId],
-    );
+    return await db.delete('wishlist', where: 'id = ?', whereArgs: [jobId]);
   }
 
   Future<bool> isInWishlist(String jobId) async {
@@ -178,11 +170,7 @@ class DatabaseHelper {
 
   Future<int> deleteInterview(int id) async {
     final db = await database;
-    return await db.delete(
-      'interviews',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('interviews', where: 'id = ?', whereArgs: [id]);
   }
 
   // ========== UTILITY FUNCTIONS ==========
