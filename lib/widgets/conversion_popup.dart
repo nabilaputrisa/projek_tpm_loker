@@ -1,8 +1,8 @@
 // lib/widgets/conversion_popup.dart
 //
 // Berisi dua bottom sheet yang dipanggil dari job_detail_page.dart:
-//   - CurrencyConverterSheet  : konversi mata uang real-time (semua mata uang)
-//   - TimezoneConverterSheet  : konversi zona waktu (WIB, WITA, WIT, London, dll)
+//   - CurrencyConverterSheet  : konversi mata uang real-time (base currency otomatis dari negara loker)
+//   - TimezoneConverterSheet  : konversi zona waktu (WIB, WITA, WIT selalu ada + zona negara loker)
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -63,6 +63,8 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
           ? widget.initialAmount.toStringAsFixed(0)
           : '',
     );
+    // Default toCurrency: IDR kalau from bukan IDR, atau USD kalau from IDR
+    _toCurrency = widget.fromCurrency == 'IDR' ? 'USD' : 'IDR';
     _loadCurrencyList();
   }
 
@@ -83,6 +85,7 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
       setState(() {
         _allCurrencies = codes;
         _loadingCurrencies = false;
+        // Pastikan toCurrency tidak sama dengan fromCurrency
         if (_toCurrency == widget.fromCurrency && codes.isNotEmpty) {
           _toCurrency = codes.firstWhere(
             (c) => c != widget.fromCurrency,
@@ -159,7 +162,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
           ),
           child: Column(
             children: [
-              // Handle
               Container(
                 margin: const EdgeInsets.only(top: 12, bottom: 16),
                 width: 40, height: 4,
@@ -168,7 +170,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -190,7 +191,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              // Search
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: TextField(
@@ -236,7 +236,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                 ),
               ),
               const SizedBox(height: 8),
-              // List
               Expanded(
                 child: filtered.isEmpty
                     ? const Center(
@@ -271,7 +270,7 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                               ),
                             ),
                             subtitle: isSource
-                                ? const Text('Mata uang sumber',
+                                ? const Text('Mata uang loker ini',
                                     style: TextStyle(
                                         fontSize: 11,
                                         color: Color(0xFFE67E22)))
@@ -314,7 +313,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
         ),
         child: Column(
           children: [
-            // Handle
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 40, height: 4,
@@ -327,7 +325,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                 controller: scroll,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                 children: [
-                  // ── Header ──────────────────────────────────────────
                   Row(children: [
                     Container(
                       width: 40, height: 40,
@@ -339,23 +336,23 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                           color: Color(0xFF2D6A9F), size: 20),
                     ),
                     const SizedBox(width: 12),
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Konversi Mata Uang',
+                        const Text('Konversi Mata Uang',
                             style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF1A3C5E))),
-                        Text('Kurs real-time · Semua mata uang',
-                            style: TextStyle(
-                                fontSize: 12, color: Color(0xFF6B7A8D))),
+                        Text(
+                          'Kurs real-time · Dari ${widget.fromCurrency}',
+                          style: const TextStyle(
+                              fontSize: 12, color: Color(0xFF6B7A8D)),
+                        ),
                       ],
                     ),
                   ]),
                   const SizedBox(height: 24),
-
-                  // ── Input jumlah ─────────────────────────────────────
                   const Text('Jumlah:',
                       style: TextStyle(
                           fontSize: 12, color: Color(0xFF6B7A8D))),
@@ -413,23 +410,17 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                     ),
                   ]),
                   const SizedBox(height: 20),
-
-                  // ── Pilih mata uang tujuan ───────────────────────────
                   const Text('Ke mata uang:',
                       style: TextStyle(
                           fontSize: 12, color: Color(0xFF6B7A8D))),
                   const SizedBox(height: 8),
-
                   if (_loadingCurrencies)
                     _buildLoadingBox()
                   else if (_listError != null)
                     _buildErrorBox()
                   else
                     _buildCurrencyDropdown(),
-
                   const SizedBox(height: 20),
-
-                  // ── Tombol konversi ──────────────────────────────────
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -465,8 +456,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // ── Error konversi ───────────────────────────────────
                   if (_error != null)
                     Container(
                       padding: const EdgeInsets.all(14),
@@ -488,8 +477,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                         ),
                       ]),
                     ),
-
-                  // ── Hasil konversi ───────────────────────────────────
                   if (_result != null) _buildResultCard(),
                 ],
               ),
@@ -499,8 +486,6 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
       ),
     );
   }
-
-  // ── Sub-widget pembantu ────────────────────────────────────────────────
 
   Widget _buildLoadingBox() => Container(
         height: 56,
@@ -623,14 +608,7 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
                 ),
               );
             },
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.copy_rounded,
-                  color: Colors.white54, size: 14),
-              SizedBox(width: 4),
-              Text('Salin hasil',
-                  style: TextStyle(
-                      color: Colors.white54, fontSize: 12)),
-            ]),
+            
           ),
         ]),
       );
@@ -639,6 +617,177 @@ class _CurrencyConverterSheetState extends State<CurrencyConverterSheet> {
 // ═══════════════════════════════════════════════════════════════════════════
 // TIMEZONE CONVERTER BOTTOM SHEET
 // ═══════════════════════════════════════════════════════════════════════════
+
+/// Data model untuk satu zona waktu
+class _TZone {
+  final String id;
+  final String name;
+  final int offsetHours; // UTC+N (gunakan desimal menit jika perlu)
+  final int offsetMinutes; // tambahan menit (contoh: India = +30)
+  final String flag;
+
+  const _TZone({
+    required this.id,
+    required this.name,
+    required this.offsetHours,
+    this.offsetMinutes = 0,
+    required this.flag,
+  });
+
+  int get totalMinutes => offsetHours * 60 + offsetMinutes;
+}
+
+/// Zona waktu Indonesia — selalu tampil
+const List<_TZone> _indonesiaZones = [
+  _TZone(id: 'WIB',  name: 'WIB – Jakarta', offsetHours: 7,  flag: '🇮🇩'),
+  _TZone(id: 'WITA', name: 'WITA – Bali',   offsetHours: 8,  flag: '🇮🇩'),
+  _TZone(id: 'WIT',  name: 'WIT – Papua',   offsetHours: 9,  flag: '🇮🇩'),
+];
+
+/// Mapping lokasi → zona waktu negara tersebut
+/// Kunci: keyword lowercase yang diperiksa di string lokasi
+/// Nilai: _TZone negara terkait
+const Map<String, _TZone> _locationZoneMap = {
+  // ── Asia Tenggara ─────────────────────────────────────────────
+  'singapore':  _TZone(id: 'SGT',  name: 'SGT – Singapura',    offsetHours: 8,  flag: '🇸🇬'),
+  'malaysia':   _TZone(id: 'MYT',  name: 'MYT – Malaysia',     offsetHours: 8,  flag: '🇲🇾'),
+  'kuala':      _TZone(id: 'MYT',  name: 'MYT – Malaysia',     offsetHours: 8,  flag: '🇲🇾'),
+  'thailand':   _TZone(id: 'ICT',  name: 'ICT – Thailand',     offsetHours: 7,  flag: '🇹🇭'),
+  'bangkok':    _TZone(id: 'ICT',  name: 'ICT – Thailand',     offsetHours: 7,  flag: '🇹🇭'),
+  'vietnam':    _TZone(id: 'ICT',  name: 'ICT – Vietnam',      offsetHours: 7,  flag: '🇻🇳'),
+  'hanoi':      _TZone(id: 'ICT',  name: 'ICT – Vietnam',      offsetHours: 7,  flag: '🇻🇳'),
+  'manila':     _TZone(id: 'PHT',  name: 'PHT – Filipina',     offsetHours: 8,  flag: '🇵🇭'),
+  'philippine': _TZone(id: 'PHT',  name: 'PHT – Filipina',     offsetHours: 8,  flag: '🇵🇭'),
+  'myanmar':    _TZone(id: 'MMT',  name: 'MMT – Myanmar',      offsetHours: 6,  offsetMinutes: 30, flag: '🇲🇲'),
+  'yangon':     _TZone(id: 'MMT',  name: 'MMT – Myanmar',      offsetHours: 6,  offsetMinutes: 30, flag: '🇲🇲'),
+  'cambodia':   _TZone(id: 'ICT',  name: 'ICT – Kamboja',      offsetHours: 7,  flag: '🇰🇭'),
+  'phnom':      _TZone(id: 'ICT',  name: 'ICT – Kamboja',      offsetHours: 7,  flag: '🇰🇭'),
+
+  // ── Asia Selatan ──────────────────────────────────────────────
+  'india':      _TZone(id: 'IST',  name: 'IST – India',        offsetHours: 5,  offsetMinutes: 30, flag: '🇮🇳'),
+  'mumbai':     _TZone(id: 'IST',  name: 'IST – India',        offsetHours: 5,  offsetMinutes: 30, flag: '🇮🇳'),
+  'delhi':      _TZone(id: 'IST',  name: 'IST – India',        offsetHours: 5,  offsetMinutes: 30, flag: '🇮🇳'),
+  'bangalore':  _TZone(id: 'IST',  name: 'IST – India',        offsetHours: 5,  offsetMinutes: 30, flag: '🇮🇳'),
+  'bengaluru':  _TZone(id: 'IST',  name: 'IST – India',        offsetHours: 5,  offsetMinutes: 30, flag: '🇮🇳'),
+  'chennai':    _TZone(id: 'IST',  name: 'IST – India',        offsetHours: 5,  offsetMinutes: 30, flag: '🇮🇳'),
+  'hyderabad':  _TZone(id: 'IST',  name: 'IST – India',        offsetHours: 5,  offsetMinutes: 30, flag: '🇮🇳'),
+  'pakistan':   _TZone(id: 'PKT',  name: 'PKT – Pakistan',     offsetHours: 5,  flag: '🇵🇰'),
+  'karachi':    _TZone(id: 'PKT',  name: 'PKT – Pakistan',     offsetHours: 5,  flag: '🇵🇰'),
+  'bangladesh': _TZone(id: 'BST',  name: 'BST – Bangladesh',   offsetHours: 6,  flag: '🇧🇩'),
+  'dhaka':      _TZone(id: 'BST',  name: 'BST – Bangladesh',   offsetHours: 6,  flag: '🇧🇩'),
+  'sri lanka':  _TZone(id: 'SLST', name: 'SLST – Sri Lanka',   offsetHours: 5,  offsetMinutes: 30, flag: '🇱🇰'),
+  'colombo':    _TZone(id: 'SLST', name: 'SLST – Sri Lanka',   offsetHours: 5,  offsetMinutes: 30, flag: '🇱🇰'),
+  'nepal':      _TZone(id: 'NPT',  name: 'NPT – Nepal',        offsetHours: 5,  offsetMinutes: 45, flag: '🇳🇵'),
+  'kathmandu':  _TZone(id: 'NPT',  name: 'NPT – Nepal',        offsetHours: 5,  offsetMinutes: 45, flag: '🇳🇵'),
+
+  // ── Asia Timur ────────────────────────────────────────────────
+  'china':      _TZone(id: 'CST',  name: 'CST – China',        offsetHours: 8,  flag: '🇨🇳'),
+  'beijing':    _TZone(id: 'CST',  name: 'CST – China',        offsetHours: 8,  flag: '🇨🇳'),
+  'shanghai':   _TZone(id: 'CST',  name: 'CST – China',        offsetHours: 8,  flag: '🇨🇳'),
+  'shenzhen':   _TZone(id: 'CST',  name: 'CST – China',        offsetHours: 8,  flag: '🇨🇳'),
+  'japan':      _TZone(id: 'JST',  name: 'JST – Jepang',       offsetHours: 9,  flag: '🇯🇵'),
+  'tokyo':      _TZone(id: 'JST',  name: 'JST – Jepang',       offsetHours: 9,  flag: '🇯🇵'),
+  'osaka':      _TZone(id: 'JST',  name: 'JST – Jepang',       offsetHours: 9,  flag: '🇯🇵'),
+  'korea':      _TZone(id: 'KST',  name: 'KST – Korea',        offsetHours: 9,  flag: '🇰🇷'),
+  'seoul':      _TZone(id: 'KST',  name: 'KST – Korea',        offsetHours: 9,  flag: '🇰🇷'),
+  'hong kong':  _TZone(id: 'HKT',  name: 'HKT – Hong Kong',    offsetHours: 8,  flag: '🇭🇰'),
+  'hongkong':   _TZone(id: 'HKT',  name: 'HKT – Hong Kong',    offsetHours: 8,  flag: '🇭🇰'),
+  'taiwan':     _TZone(id: 'CST',  name: 'NST – Taiwan',       offsetHours: 8,  flag: '🇹🇼'),
+  'taipei':     _TZone(id: 'CST',  name: 'NST – Taiwan',       offsetHours: 8,  flag: '🇹🇼'),
+
+  // ── Asia Barat / Timur Tengah ─────────────────────────────────
+  'dubai':      _TZone(id: 'GST',  name: 'GST – Dubai',        offsetHours: 4,  flag: '🇦🇪'),
+  'uae':        _TZone(id: 'GST',  name: 'GST – UAE',          offsetHours: 4,  flag: '🇦🇪'),
+  'saudi':      _TZone(id: 'AST',  name: 'AST – Arab Saudi',   offsetHours: 3,  flag: '🇸🇦'),
+  'riyadh':     _TZone(id: 'AST',  name: 'AST – Arab Saudi',   offsetHours: 3,  flag: '🇸🇦'),
+  'jeddah':     _TZone(id: 'AST',  name: 'AST – Arab Saudi',   offsetHours: 3,  flag: '🇸🇦'),
+  'qatar':      _TZone(id: 'AST',  name: 'AST – Qatar',        offsetHours: 3,  flag: '🇶🇦'),
+  'doha':       _TZone(id: 'AST',  name: 'AST – Qatar',        offsetHours: 3,  flag: '🇶🇦'),
+  'kuwait':     _TZone(id: 'AST',  name: 'AST – Kuwait',       offsetHours: 3,  flag: '🇰🇼'),
+  'bahrain':    _TZone(id: 'AST',  name: 'AST – Bahrain',      offsetHours: 3,  flag: '🇧🇭'),
+  'oman':       _TZone(id: 'GST',  name: 'GST – Oman',         offsetHours: 4,  flag: '🇴🇲'),
+  'muscat':     _TZone(id: 'GST',  name: 'GST – Oman',         offsetHours: 4,  flag: '🇴🇲'),
+  'jordan':     _TZone(id: 'EET',  name: 'EET – Yordania',     offsetHours: 2,  flag: '🇯🇴'),
+  'amman':      _TZone(id: 'EET',  name: 'EET – Yordania',     offsetHours: 2,  flag: '🇯🇴'),
+  'israel':     _TZone(id: 'IST',  name: 'IST – Israel',       offsetHours: 2,  flag: '🇮🇱'),
+  'tel aviv':   _TZone(id: 'IST',  name: 'IST – Israel',       offsetHours: 2,  flag: '🇮🇱'),
+  'turkey':     _TZone(id: 'TRT',  name: 'TRT – Turki',        offsetHours: 3,  flag: '🇹🇷'),
+  'istanbul':   _TZone(id: 'TRT',  name: 'TRT – Turki',        offsetHours: 3,  flag: '🇹🇷'),
+  'ankara':     _TZone(id: 'TRT',  name: 'TRT – Turki',        offsetHours: 3,  flag: '🇹🇷'),
+  'egypt':      _TZone(id: 'EET',  name: 'EET – Mesir',        offsetHours: 2,  flag: '🇪🇬'),
+  'cairo':      _TZone(id: 'EET',  name: 'EET – Mesir',        offsetHours: 2,  flag: '🇪🇬'),
+
+  // ── Eropa ─────────────────────────────────────────────────────
+  'london':     _TZone(id: 'GMT',  name: 'GMT – London',       offsetHours: 1,  flag: '🇬🇧'),
+  'uk':         _TZone(id: 'GMT',  name: 'GMT – UK',           offsetHours: 1,  flag: '🇬🇧'),
+  'england':    _TZone(id: 'GMT',  name: 'GMT – UK',           offsetHours: 1,  flag: '🇬🇧'),
+  'paris':      _TZone(id: 'CET',  name: 'CET – Paris',        offsetHours: 2,  flag: '🇫🇷'),
+  'france':     _TZone(id: 'CET',  name: 'CET – Prancis',      offsetHours: 2,  flag: '🇫🇷'),
+  'germany':    _TZone(id: 'CET',  name: 'CET – Jerman',       offsetHours: 2,  flag: '🇩🇪'),
+  'berlin':     _TZone(id: 'CET',  name: 'CET – Jerman',       offsetHours: 2,  flag: '🇩🇪'),
+  'frankfurt':  _TZone(id: 'CET',  name: 'CET – Jerman',       offsetHours: 2,  flag: '🇩🇪'),
+  'amsterdam':  _TZone(id: 'CET',  name: 'CET – Belanda',      offsetHours: 2,  flag: '🇳🇱'),
+  'netherlands':_TZone(id: 'CET',  name: 'CET – Belanda',      offsetHours: 2,  flag: '🇳🇱'),
+  'spain':      _TZone(id: 'CET',  name: 'CET – Spanyol',      offsetHours: 2,  flag: '🇪🇸'),
+  'madrid':     _TZone(id: 'CET',  name: 'CET – Spanyol',      offsetHours: 2,  flag: '🇪🇸'),
+  'italy':      _TZone(id: 'CET',  name: 'CET – Italia',       offsetHours: 2,  flag: '🇮🇹'),
+  'rome':       _TZone(id: 'CET',  name: 'CET – Italia',       offsetHours: 2,  flag: '🇮🇹'),
+  'milan':      _TZone(id: 'CET',  name: 'CET – Italia',       offsetHours: 2,  flag: '🇮🇹'),
+  'switzerland':_TZone(id: 'CET',  name: 'CET – Swiss',        offsetHours: 2,  flag: '🇨🇭'),
+  'zurich':     _TZone(id: 'CET',  name: 'CET – Swiss',        offsetHours: 2,  flag: '🇨🇭'),
+  'sweden':     _TZone(id: 'CET',  name: 'CET – Swedia',       offsetHours: 2,  flag: '🇸🇪'),
+  'stockholm':  _TZone(id: 'CET',  name: 'CET – Swedia',       offsetHours: 2,  flag: '🇸🇪'),
+  'norway':     _TZone(id: 'CET',  name: 'CET – Norwegia',     offsetHours: 2,  flag: '🇳🇴'),
+  'oslo':       _TZone(id: 'CET',  name: 'CET – Norwegia',     offsetHours: 2,  flag: '🇳🇴'),
+  'russia':     _TZone(id: 'MSK',  name: 'MSK – Moskow',       offsetHours: 3,  flag: '🇷🇺'),
+  'moscow':     _TZone(id: 'MSK',  name: 'MSK – Moskow',       offsetHours: 3,  flag: '🇷🇺'),
+
+  // ── Amerika ───────────────────────────────────────────────────
+  'new york':   _TZone(id: 'EST',  name: 'EST – New York',     offsetHours: -4, flag: '🇺🇸'),
+  'los angeles':_TZone(id: 'PST',  name: 'PST – Los Angeles',  offsetHours: -7, flag: '🇺🇸'),
+  'chicago':    _TZone(id: 'CST',  name: 'CST – Chicago',      offsetHours: -5, flag: '🇺🇸'),
+  'san francisco':_TZone(id:'PST', name: 'PST – San Francisco',offsetHours: -7, flag: '🇺🇸'),
+  'seattle':    _TZone(id: 'PST',  name: 'PST – Seattle',      offsetHours: -7, flag: '🇺🇸'),
+  'boston':     _TZone(id: 'EST',  name: 'EST – Boston',       offsetHours: -4, flag: '🇺🇸'),
+  'usa':        _TZone(id: 'EST',  name: 'EST – Amerika',      offsetHours: -4, flag: '🇺🇸'),
+  'canada':     _TZone(id: 'EST',  name: 'EST – Kanada',       offsetHours: -4, flag: '🇨🇦'),
+  'toronto':    _TZone(id: 'EST',  name: 'EST – Kanada',       offsetHours: -4, flag: '🇨🇦'),
+  'vancouver':  _TZone(id: 'PST',  name: 'PST – Kanada',       offsetHours: -7, flag: '🇨🇦'),
+  'brazil':     _TZone(id: 'BRT',  name: 'BRT – Brasil',       offsetHours: -3, flag: '🇧🇷'),
+  'sao paulo':  _TZone(id: 'BRT',  name: 'BRT – Brasil',       offsetHours: -3, flag: '🇧🇷'),
+
+  // ── Oseania ───────────────────────────────────────────────────
+  'australia':  _TZone(id: 'AEST', name: 'AEST – Australia',   offsetHours: 10, flag: '🇦🇺'),
+  'sydney':     _TZone(id: 'AEST', name: 'AEST – Sydney',      offsetHours: 10, flag: '🇦🇺'),
+  'melbourne':  _TZone(id: 'AEST', name: 'AEST – Melbourne',   offsetHours: 10, flag: '🇦🇺'),
+  'perth':      _TZone(id: 'AWST', name: 'AWST – Perth',       offsetHours: 8,  flag: '🇦🇺'),
+  'new zealand':_TZone(id: 'NZST', name: 'NZST – Selandia Baru',offsetHours:12, flag: '🇳🇿'),
+  'auckland':   _TZone(id: 'NZST', name: 'NZST – Auckland',    offsetHours: 12, flag: '🇳🇿'),
+
+  // ── Afrika ────────────────────────────────────────────────────
+  'south africa':_TZone(id:'SAST', name: 'SAST – Afrika Selatan',offsetHours:2, flag: '🇿🇦'),
+  'johannesburg':_TZone(id:'SAST', name: 'SAST – Johannesburg', offsetHours: 2, flag: '🇿🇦'),
+  'nigeria':    _TZone(id: 'WAT',  name: 'WAT – Nigeria',      offsetHours: 1,  flag: '🇳🇬'),
+  'lagos':      _TZone(id: 'WAT',  name: 'WAT – Nigeria',      offsetHours: 1,  flag: '🇳🇬'),
+  'kenya':      _TZone(id: 'EAT',  name: 'EAT – Kenya',        offsetHours: 3,  flag: '🇰🇪'),
+  'nairobi':    _TZone(id: 'EAT',  name: 'EAT – Kenya',        offsetHours: 3,  flag: '🇰🇪'),
+};
+
+/// Detect zona waktu negara dari string lokasi loker.
+/// Return null kalau tidak ketemu (berarti loker di Indonesia atau tidak dikenali).
+_TZone? _detectForeignZone(String location) {
+  final loc = location.toLowerCase();
+  // Cek keyword terpanjang dulu supaya "hong kong" tidak mentrigger "kong"
+  final sorted = _locationZoneMap.keys.toList()
+    ..sort((a, b) => b.length.compareTo(a.length));
+  for (final keyword in sorted) {
+    if (loc.contains(keyword)) {
+      return _locationZoneMap[keyword];
+    }
+  }
+  return null;
+}
+
 class TimezoneConverterSheet extends StatefulWidget {
   final String jobLocation;
 
@@ -650,61 +799,147 @@ class TimezoneConverterSheet extends StatefulWidget {
 }
 
 class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
+  late List<_TZone> _zones;
   late TimeOfDay _selectedTime;
-  late String _sourceZone;
-
-  static const List<Map<String, dynamic>> _zones = [
-    {'id': 'WIB',    'name': 'WIB – Jakarta',  'offset': 7,  'flag': '🇮🇩'},
-    {'id': 'WITA',   'name': 'WITA – Bali',     'offset': 8,  'flag': '🇮🇩'},
-    {'id': 'WIT',    'name': 'WIT – Papua',      'offset': 9,  'flag': '🇮🇩'},
-    {'id': 'London', 'name': 'GMT – London',     'offset': 1,  'flag': '🇬🇧'},
-    {'id': 'UTC',    'name': 'UTC',              'offset': 0,  'flag': '🌐'},
-    {'id': 'NY',     'name': 'EDT – New York',   'offset': -4, 'flag': '🇺🇸'},
-    {'id': 'SGT',    'name': 'SGT – Singapura',  'offset': 8,  'flag': '🇸🇬'},
-    {'id': 'JST',    'name': 'JST – Tokyo',      'offset': 9,  'flag': '🇯🇵'},
-  ];
+  late String _sourceZoneId;
+  late String _targetZoneId;
 
   @override
   void initState() {
     super.initState();
     _selectedTime = const TimeOfDay(hour: 9, minute: 0);
-    _sourceZone = _detectZone(widget.jobLocation);
+
+    // Bangun daftar zona: WIB/WITA/WIT selalu ada
+    _zones = List.from(_indonesiaZones);
+
+    final foreign = _detectForeignZone(widget.jobLocation);
+    if (foreign != null) {
+      // Hindari duplikat (misalnya jika loker di Bali yang sudah ada WITA)
+      final alreadyExists = _zones.any((z) => z.id == foreign.id);
+      if (!alreadyExists) _zones.add(foreign);
+
+      // Default: source = zona negara loker, target = WIB
+      _sourceZoneId = foreign.id;
+      _targetZoneId = 'WIB';
+    } else {
+      // Loker Indonesia → source = WIB, target = WITA
+      _sourceZoneId = 'WIB';
+      _targetZoneId = 'WITA';
+    }
   }
 
-  String _detectZone(String loc) {
-    final l = loc.toLowerCase();
-    if (l.contains('london') || l.contains('uk') || l.contains('england')) return 'London';
-    if (l.contains('new york') || l.contains('usa')) return 'NY';
-    if (l.contains('singapore')) return 'SGT';
-    if (l.contains('tokyo') || l.contains('japan')) return 'JST';
-    if (l.contains('bali') || l.contains('makassar')) return 'WITA';
-    if (l.contains('papua') || l.contains('ambon')) return 'WIT';
-    return 'WIB';
+  _TZone _zoneById(String id) => _zones.firstWhere((z) => z.id == id);
+
+  int _convertTotalMinutes(String targetId) {
+    final src = _zoneById(_sourceZoneId);
+    final tgt = _zoneById(targetId);
+    final diff = tgt.totalMinutes - src.totalMinutes;
+    final srcTotal = _selectedTime.hour * 60 + _selectedTime.minute;
+    return ((srcTotal + diff) % 1440 + 1440) % 1440;
   }
 
-  int _offsetOf(String id) =>
-      _zones.firstWhere((z) => z['id'] == id)['offset'] as int;
-
-  String _convertTo(String targetId) {
-    final diff = (_offsetOf(targetId) - _offsetOf(_sourceZone)) * 60;
-    final total = _selectedTime.hour * 60 + _selectedTime.minute + diff;
-    final h = ((total ~/ 60) % 24 + 24) % 24;
-    final m = ((total % 60) + 60) % 60;
+  String _formatTime(int totalMins) {
+    final h = totalMins ~/ 60;
+    final m = totalMins % 60;
     final h12 = h == 0 ? 12 : (h > 12 ? h - 12 : h);
     return '${h12.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} ${h < 12 ? 'AM' : 'PM'}';
   }
 
-  String _timeLabel(int h) {
-    if (h >= 5 && h < 11) return 'Pagi';
-    if (h >= 11 && h < 15) return 'Siang';
-    if (h >= 15 && h < 18) return 'Sore';
+  String _timeLabel(int hour) {
+    if (hour >= 5 && hour < 11) return 'Pagi';
+    if (hour >= 11 && hour < 15) return 'Siang';
+    if (hour >= 15 && hour < 18) return 'Sore';
     return 'Malam';
+  }
+
+  void _swapZones() {
+    setState(() {
+      final tmp = _sourceZoneId;
+      _sourceZoneId = _targetZoneId;
+      _targetZoneId = tmp;
+    });
+  }
+
+  String _offsetLabel(_TZone z) {
+    final sign = z.offsetHours >= 0 ? '+' : '';
+    if (z.offsetMinutes != 0) {
+      final totalH = z.offsetHours;
+      final m = z.offsetMinutes;
+      return 'UTC$sign${totalH.toString()}:${m.toString().padLeft(2, '0')}';
+    }
+    return 'UTC$sign${z.offsetHours}';
+  }
+
+  Widget _buildZoneChip(_TZone z, {required bool isSelected, required bool isExcluded, required Color activeColor, required VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: isExcluded ? null : onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor
+              : isExcluded
+                  ? const Color(0xFFEEEEEE)
+                  : const Color(0xFFF5F7FA),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? activeColor
+                : isExcluded
+                    ? const Color(0xFFCCCCCC)
+                    : const Color(0xFFDDE3EA),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '${z.flag} ${z.id}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: isSelected
+                    ? Colors.white
+                    : isExcluded
+                        ? const Color(0xFFAAAAAA)
+                        : const Color(0xFF1A3C5E),
+              ),
+            ),
+            Text(
+              _offsetLabel(z),
+              style: TextStyle(
+                fontSize: 10,
+                color: isSelected
+                    ? Colors.white70
+                    : const Color(0xFF6B7A8D),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final src = _zoneById(_sourceZoneId);
+    final tgt = _zoneById(_targetZoneId);
+    final targetTotal = _convertTotalMinutes(_targetZoneId);
+    final targetH = targetTotal ~/ 60;
+    final convertedTime = _formatTime(targetTotal);
+
+    // Hitung diff label
+    final diffMin = tgt.totalMinutes - src.totalMinutes;
+    final diffSign = diffMin >= 0 ? '+' : '';
+    final diffH = diffMin ~/ 60;
+    final diffM = (diffMin % 60).abs();
+    final diffLabel = diffM == 0
+        ? '$diffSign${diffH}h'
+        : '$diffSign${diffH}h ${diffM}m';
+
     return DraggableScrollableSheet(
-      initialChildSize: 0.82,
+      initialChildSize: 0.85,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       builder: (_, scroll) => Container(
@@ -725,7 +960,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
               controller: scroll,
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
               children: [
-                // ── Header ────────────────────────────────────────────
+                // ── Header ─────────────────────────────────────────────
                 Row(children: [
                   Container(
                     width: 40, height: 40,
@@ -737,68 +972,46 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                         color: Color(0xFF7B3DD1), size: 20),
                   ),
                   const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Konversi Zona Waktu',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A3C5E))),
-                      Text('WIB · WITA · WIT · London & lainnya',
-                          style: TextStyle(
-                              fontSize: 12, color: Color(0xFF6B7A8D))),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Konversi Zona Waktu',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1A3C5E))),
+                        Text(
+                          _zones.map((z) => z.id).join(' · '),
+                          style: const TextStyle(
+                              fontSize: 12, color: Color(0xFF6B7A8D)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
                 ]),
                 const SizedBox(height: 24),
 
-                // ── Pilih zona sumber ──────────────────────────────────
+                // ── Pilih zona sumber ───────────────────────────────────
                 const Text('Zona waktu sumber:',
-                    style: TextStyle(
-                        fontSize: 12, color: Color(0xFF6B7A8D))),
-                const SizedBox(height: 8),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7A8D))),
+                const SizedBox(height: 10),
                 Wrap(
                   spacing: 8, runSpacing: 8,
-                  children: _zones.map((z) {
-                    final sel = _sourceZone == z['id'];
-                    return GestureDetector(
-                      onTap: () => setState(() => _sourceZone = z['id']),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: sel
-                              ? const Color(0xFF7B3DD1)
-                              : const Color(0xFFF5F7FA),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: sel
-                                ? const Color(0xFF7B3DD1)
-                                : const Color(0xFFDDE3EA),
-                          ),
-                        ),
-                        child: Text(
-                          '${z['flag']} ${z['id']}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: sel
-                                ? Colors.white
-                                : const Color(0xFF4A5568),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                  children: _zones.map((z) => _buildZoneChip(
+                    z,
+                    isSelected: z.id == _sourceZoneId,
+                    isExcluded: z.id == _targetZoneId,
+                    activeColor: const Color(0xFF7B3DD1),
+                    onTap: () => setState(() => _sourceZoneId = z.id),
+                  )).toList(),
                 ),
                 const SizedBox(height: 20),
 
-                // ── Pilih jam ──────────────────────────────────────────
+                // ── Pilih jam ───────────────────────────────────────────
                 const Text('Jam acara / interview:',
-                    style: TextStyle(
-                        fontSize: 12, color: Color(0xFF6B7A8D))),
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7A8D))),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () async {
@@ -813,8 +1026,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                         child: child!,
                       ),
                     );
-                    if (picked != null)
-                      setState(() => _selectedTime = picked);
+                    if (picked != null) setState(() => _selectedTime = picked);
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
@@ -847,86 +1059,116 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                     ]),
                   ),
                 ),
+                const SizedBox(height: 20),
+
+                // ── Pilih zona tujuan ───────────────────────────────────
+                const Text('Zona waktu tujuan:',
+                    style: TextStyle(fontSize: 12, color: Color(0xFF6B7A8D))),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8, runSpacing: 8,
+                  children: _zones.map((z) => _buildZoneChip(
+                    z,
+                    isSelected: z.id == _targetZoneId,
+                    isExcluded: z.id == _sourceZoneId,
+                    activeColor: const Color(0xFF2D6A9F),
+                    onTap: () => setState(() => _targetZoneId = z.id),
+                  )).toList(),
+                ),
                 const SizedBox(height: 24),
 
-                // ── Hasil semua zona ───────────────────────────────────
-                const Text('Hasil konversi:',
-                    style: TextStyle(
-                        fontSize: 12, color: Color(0xFF6B7A8D))),
-                const SizedBox(height: 10),
-                ..._zones.map((z) {
-                  final isSrc = z['id'] == _sourceZone;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: isSrc
-                          ? const Color(0xFFF0EAFD)
-                          : const Color(0xFFF5F7FA),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isSrc
-                            ? const Color(0xFF7B3DD1)
-                            : const Color(0xFFDDE3EA),
-                        width: isSrc ? 1.5 : 1,
-                      ),
+                // ── Hasil konversi ──────────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4A148C), Color(0xFF7B3DD1)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Row(children: [
-                      Text(z['flag'] as String,
-                          style: const TextStyle(fontSize: 22)),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            z['name'] as String,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: isSrc
-                                  ? const Color(0xFF7B3DD1)
-                                  : const Color(0xFF4A5568),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // From
+                      Row(children: [
+                        Text(src.flag, style: const TextStyle(fontSize: 20)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${src.name}  •  ${_selectedTime.format(context)} ${_timeLabel(_selectedTime.hour)}',
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 13),
+                          ),
+                        ),
+                      ]),
+
+                      // Divider + swap
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(children: [
+                          Expanded(
+                              child: Container(height: 1, color: Colors.white24)),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: _swapZones,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.swap_vert_rounded,
+                                  color: Colors.white, size: 18),
                             ),
                           ),
-                          Text(
-                            'UTC${z['offset'] >= 0 ? '+' : ''}${z['offset']}',
+                          const SizedBox(width: 8),
+                          Expanded(
+                              child: Container(height: 1, color: Colors.white24)),
+                        ]),
+                      ),
+
+                      // To
+                      Row(children: [
+                        Text(tgt.flag, style: const TextStyle(fontSize: 20)),
+                        const SizedBox(width: 8),
+                        Text(tgt.name,
                             style: const TextStyle(
-                                fontSize: 11,
-                                color: Color(0xFF6B7A8D)),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
+                                color: Colors.white70, fontSize: 13)),
+                      ]),
+                      const SizedBox(height: 6),
                       Text(
-                        isSrc
-                            ? _selectedTime.format(context)
-                            : _convertTo(z['id'] as String),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: isSrc
-                              ? const Color(0xFF7B3DD1)
-                              : const Color(0xFF1A3C5E),
+                        convertedTime,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        _timeLabel(targetH),
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 13),
+                      ),
+
+                      // Offset info
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${_sourceZoneId} → ${_targetZoneId}  ($diffLabel)',
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
                         ),
                       ),
-                      if (isSrc) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF7B3DD1),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text('sumber',
-                              style: TextStyle(
-                                  color: Colors.white, fontSize: 10)),
-                        ),
-                      ],
-                    ]),
-                  );
-                }),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
