@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:projektpm/views/home/job_detail_page.dart';
 import 'package:provider/provider.dart';
 import '../../providers/job_provider.dart';
 import '../../data/services/api_job_service.dart';
 import '../../widgets/job_card.dart';
+import '../home/job_detail_page.dart';
 
 
 // Import halaman-halaman lain
