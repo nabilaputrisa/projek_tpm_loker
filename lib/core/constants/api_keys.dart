@@ -7,9 +7,7 @@ class ApiKeys {
 
   // Google Maps API Key
   // Dapatkan di: https://console.cloud.google.com/
-  static const String mapsApiKey = 'YOUR_GOOGLE_MAPS_API_KEY_HERE';
+  static const String mapsApiKey = 'AIzaSyDnX03r_exSCSrDCa8iQSSKIhDNj2-rNVk';
 
-  // ExchangeRate API Key
-  // Dapatkan di: https://www.exchangerate-api.com/
-  static const String exchangeRateApiKey = 'YOUR_EXCHANGE_RATE_API_KEY_HERE';
+
 }
