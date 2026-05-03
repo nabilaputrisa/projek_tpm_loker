@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:projektpm/views/home/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/database_helper.dart';
 
@@ -187,6 +188,10 @@ class _LoginPageState extends State<LoginPage> {
     // Contoh: Navigator.pushReplacementNamed(context, '/home');
 
     _showSnackBar("✓ Login Berhasil! Selamat Datang.");
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const MainNavigationPage()),
+    );
 
     // Sementara untuk testing, tampilkan dialog
     showDialog(

@@ -6,9 +6,9 @@ import 'views/home/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // TODO: Inisialisasi notifikasi, timezone, dll
-  
+
   runApp(const MyApp());
 }
 
@@ -40,10 +40,11 @@ class MyApp extends StatelessWidget {
         ),
         // Untuk testing, langsung ke HomePage
         // Nanti ganti ke LoginPage setelah siap
-        home: const MainNavigationPage(), // ← ganti dari HomePage
+        home: const LoginPage(), // ← ganti dari HomePage
         routes: {
           '/login': (context) => const LoginPage(),
-          '/home': (context) => const MainNavigationPage(), // ← ganti dari HomePage
+          '/home': (context) =>
+              const MainNavigationPage(), // ← ganti dari HomePage
         },
       ),
     );
