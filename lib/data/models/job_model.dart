@@ -61,188 +61,82 @@ class JobModel {
   }
 
   // ─── Getter: Currency Code ─────────────────────────────────────────────────
-  // Deteksi dari currencySymbol dulu (paling akurat karena dari API),
-  // lalu fallback ke deteksi lokasi, lalu fallback ke USD.
+  // Prioritas: dari currencySymbol → fallback dari lokasi → fallback USD
   String get currencyCode {
-    // 1. Deteksi dari currencySymbol yang sudah ada
     final fromSymbol = _currencyCodeFromSymbol(currencySymbol);
     if (fromSymbol != null) return fromSymbol;
 
-    // 2. Fallback: deteksi dari string lokasi
     final fromLocation = _currencyCodeFromLocation(location);
     if (fromLocation != null) return fromLocation;
 
-    // 3. Fallback terakhir
     return 'USD';
   }
 
-  /// Map symbol → currency code
+  /// Map symbol → currency code (hanya 7 negara yang di-support Adzuna)
   String? _currencyCodeFromSymbol(String symbol) {
     const map = {
-      '£': 'GBP',
-      '€': 'EUR',
-      '¥': 'JPY',
-      '₹': 'INR',
-      'A\$': 'AUD',
-      'C\$': 'CAD',
-      'S\$': 'SGD',
-      'HK\$': 'HKD',
-      'NZ\$': 'NZD',
-      'RM': 'MYR',
-      '฿': 'THB',
-      '₩': 'KRW',
-      '₫': 'VND',
-      '₱': 'PHP',
-      'Rp': 'IDR',
-      'R': 'ZAR',
-      'R\$': 'BRL',
-      'Fr': 'CHF',
-      'kr': 'SEK',
-      'zł': 'PLN',
-      '₺': 'TRY',
-      '₽': 'RUB',
-      '﷼': 'SAR',
-      'د.إ': 'AED',
-      'ر.ق': 'QAR',
-      'د.ك': 'KWD',
-      '.د.ب': 'BHD',
-      'ر.ع.': 'OMR',
-      'د.أ': 'JOD',
-      '₪': 'ILS',
-      'Kč': 'CZK',
-      'Ft': 'HUF',
-      '\$': 'USD', // paling akhir karena paling umum/ambigu
+      'S\$': 'SGD', // Singapore
+      '₹':   'INR', // India
+      '£':   'GBP', // UK
+      'A\$': 'AUD', // Australia
+      'C\$': 'CAD', // Canada
+      '€':   'EUR', // Germany
+      '\$':  'USD', // US — paling akhir karena paling ambigu
     };
     return map[symbol];
   }
 
-  /// Deteksi currency dari string lokasi (keyword matching)
+  /// Deteksi currency dari string lokasi (hanya lokasi dari 7 negara Adzuna)
   String? _currencyCodeFromLocation(String location) {
     final loc = location.toLowerCase();
-
-    // Sort keyword terpanjang dulu supaya "hong kong" tidak match "kong"
     final sorted = _locationCurrencyMap.keys.toList()
       ..sort((a, b) => b.length.compareTo(a.length));
-
     for (final keyword in sorted) {
-      if (loc.contains(keyword)) {
-        return _locationCurrencyMap[keyword];
-      }
+      if (loc.contains(keyword)) return _locationCurrencyMap[keyword];
     }
     return null;
   }
 
-  /// Keyword lokasi → currency code
+  /// Keyword lokasi → currency code (hanya 7 negara: sg, in, gb, au, us, ca, de)
   static const Map<String, String> _locationCurrencyMap = {
-    // ── Indonesia ──────────────────────────────────────────────────────
-    'indonesia': 'IDR', 'jakarta': 'IDR', 'surabaya': 'IDR',
-    'bandung': 'IDR', 'bali': 'IDR', 'yogyakarta': 'IDR',
-    'medan': 'IDR', 'semarang': 'IDR', 'makassar': 'IDR',
-    'palembang': 'IDR', 'depok': 'IDR', 'tangerang': 'IDR',
-    'bekasi': 'IDR', 'bogor': 'IDR',
-
-    // ── UK ────────────────────────────────────────────────────────────
-    'london': 'GBP', 'uk': 'GBP', 'england': 'GBP',
-    'manchester': 'GBP', 'birmingham': 'GBP', 'edinburgh': 'GBP',
-    'glasgow': 'GBP', 'liverpool': 'GBP', 'leeds': 'GBP',
-    'bristol': 'GBP', 'sheffield': 'GBP', 'cambridge': 'GBP',
-    'oxford': 'GBP', 'united kingdom': 'GBP', 'britain': 'GBP',
-
-    // ── Eropa (EUR) ───────────────────────────────────────────────────
-    'germany': 'EUR', 'berlin': 'EUR', 'munich': 'EUR',
-    'frankfurt': 'EUR', 'hamburg': 'EUR', 'cologne': 'EUR',
-    'düsseldorf': 'EUR', 'dusseldorf': 'EUR', 'stuttgart': 'EUR',
-    'france': 'EUR', 'paris': 'EUR', 'lyon': 'EUR', 'marseille': 'EUR',
-    'netherlands': 'EUR', 'amsterdam': 'EUR', 'rotterdam': 'EUR',
-    'spain': 'EUR', 'madrid': 'EUR', 'barcelona': 'EUR',
-    'italy': 'EUR', 'rome': 'EUR', 'milan': 'EUR',
-    'portugal': 'EUR', 'lisbon': 'EUR', 'porto': 'EUR',
-    'belgium': 'EUR', 'brussels': 'EUR',
-    'austria': 'EUR', 'vienna': 'EUR',
-    'finland': 'EUR', 'helsinki': 'EUR',
-    'ireland': 'EUR', 'dublin': 'EUR',
-    'greece': 'EUR', 'athens': 'EUR',
-    'luxembourg': 'EUR',
-
-    // ── Swiss ─────────────────────────────────────────────────────────
-    'switzerland': 'CHF', 'zurich': 'CHF', 'geneva': 'CHF', 'bern': 'CHF',
-
-    // ── Nordik (non-EUR) ──────────────────────────────────────────────
-    'sweden': 'SEK', 'stockholm': 'SEK', 'gothenburg': 'SEK',
-    'norway': 'NOK', 'oslo': 'NOK',
-    'denmark': 'DKK', 'copenhagen': 'DKK',
-
-    // ── Eropa Timur ───────────────────────────────────────────────────
-    'poland': 'PLN', 'warsaw': 'PLN', 'krakow': 'PLN',
-    'czech': 'CZK', 'prague': 'CZK',
-    'hungary': 'HUF', 'budapest': 'HUF',
-    'russia': 'RUB', 'moscow': 'RUB', 'saint petersburg': 'RUB',
-    'turkey': 'TRY', 'istanbul': 'TRY', 'ankara': 'TRY',
-
-    // ── Amerika Serikat ───────────────────────────────────────────────
-    'united states': 'USD', 'usa': 'USD', 'new york': 'USD',
-    'san francisco': 'USD', 'los angeles': 'USD', 'chicago': 'USD',
-    'seattle': 'USD', 'boston': 'USD', 'austin': 'USD',
-    'dallas': 'USD', 'houston': 'USD', 'miami': 'USD',
-    'denver': 'USD', 'atlanta': 'USD', 'washington': 'USD',
-
-    // ── Kanada ────────────────────────────────────────────────────────
-    'canada': 'CAD', 'toronto': 'CAD', 'vancouver': 'CAD',
-    'montreal': 'CAD', 'calgary': 'CAD', 'ottawa': 'CAD',
-
-    // ── Australia ─────────────────────────────────────────────────────
-    'australia': 'AUD', 'sydney': 'AUD', 'melbourne': 'AUD',
-    'brisbane': 'AUD', 'perth': 'AUD', 'adelaide': 'AUD',
-
-    // ── Selandia Baru ─────────────────────────────────────────────────
-    'new zealand': 'NZD', 'auckland': 'NZD', 'wellington': 'NZD',
-
-    // ── Asia Tenggara ─────────────────────────────────────────────────
+    // Singapore
     'singapore': 'SGD',
-    'malaysia': 'MYR', 'kuala lumpur': 'MYR', 'penang': 'MYR',
-    'thailand': 'THB', 'bangkok': 'THB', 'chiang mai': 'THB',
-    'vietnam': 'VND', 'hanoi': 'VND', 'ho chi minh': 'VND',
-    'philippines': 'PHP', 'manila': 'PHP', 'cebu': 'PHP',
-    'myanmar': 'MMK', 'yangon': 'MMK',
-    'cambodia': 'KHR', 'phnom penh': 'KHR',
+    'central region': 'SGD', 'east region': 'SGD',
+    'north region': 'SGD', 'north-east region': 'SGD', 'west region': 'SGD',
 
-    // ── Asia Selatan ──────────────────────────────────────────────────
-    'india': 'INR', 'mumbai': 'INR', 'delhi': 'INR',
-    'bangalore': 'INR', 'bengaluru': 'INR', 'hyderabad': 'INR',
+    // India
+    'india': 'INR', 'bangalore': 'INR', 'bengaluru': 'INR',
+    'mumbai': 'INR', 'delhi': 'INR', 'hyderabad': 'INR',
     'chennai': 'INR', 'pune': 'INR', 'kolkata': 'INR',
     'ahmedabad': 'INR', 'noida': 'INR', 'gurgaon': 'INR',
-    'pakistan': 'PKR', 'karachi': 'PKR', 'lahore': 'PKR',
-    'bangladesh': 'BDT', 'dhaka': 'BDT',
-    'sri lanka': 'LKR', 'colombo': 'LKR',
-    'nepal': 'NPR', 'kathmandu': 'NPR',
 
-    // ── Asia Timur ────────────────────────────────────────────────────
-    'china': 'CNY', 'beijing': 'CNY', 'shanghai': 'CNY',
-    'shenzhen': 'CNY', 'guangzhou': 'CNY', 'chengdu': 'CNY',
-    'japan': 'JPY', 'tokyo': 'JPY', 'osaka': 'JPY', 'kyoto': 'JPY',
-    'korea': 'KRW', 'seoul': 'KRW', 'busan': 'KRW',
-    'hong kong': 'HKD', 'hongkong': 'HKD',
-    'taiwan': 'TWD', 'taipei': 'TWD',
+    // United Kingdom
+    'united kingdom': 'GBP', 'uk': 'GBP', 'london': 'GBP',
+    'manchester': 'GBP', 'birmingham': 'GBP', 'leeds': 'GBP',
+    'glasgow': 'GBP', 'bristol': 'GBP', 'edinburgh': 'GBP',
+    'sheffield': 'GBP', 'liverpool': 'GBP', 'nottingham': 'GBP',
 
-    // ── Timur Tengah ──────────────────────────────────────────────────
-    'saudi': 'SAR', 'riyadh': 'SAR', 'jeddah': 'SAR',
-    'uae': 'AED', 'dubai': 'AED', 'abu dhabi': 'AED',
-    'qatar': 'QAR', 'doha': 'QAR',
-    'kuwait': 'KWD',
-    'bahrain': 'BHD', 'manama': 'BHD',
-    'oman': 'OMR', 'muscat': 'OMR',
-    'jordan': 'JOD', 'amman': 'JOD',
-    'israel': 'ILS', 'tel aviv': 'ILS',
-    'egypt': 'EGP', 'cairo': 'EGP',
+    // Australia
+    'australia': 'AUD', 'sydney': 'AUD', 'melbourne': 'AUD',
+    'brisbane': 'AUD', 'perth': 'AUD', 'adelaide': 'AUD',
+    'gold coast': 'AUD', 'canberra': 'AUD', 'darwin': 'AUD', 'hobart': 'AUD',
 
-    // ── Afrika ────────────────────────────────────────────────────────
-    'south africa': 'ZAR', 'johannesburg': 'ZAR', 'cape town': 'ZAR',
-    'nigeria': 'NGN', 'lagos': 'NGN', 'abuja': 'NGN',
-    'kenya': 'KES', 'nairobi': 'KES',
+    // United States
+    'united states': 'USD', 'usa': 'USD', 'new york': 'USD',
+    'los angeles': 'USD', 'chicago': 'USD', 'houston': 'USD',
+    'san francisco': 'USD', 'seattle': 'USD', 'austin': 'USD',
+    'boston': 'USD', 'miami': 'USD', 'denver': 'USD',
 
-    // ── Amerika Latin ─────────────────────────────────────────────────
-    'brazil': 'BRL', 'sao paulo': 'BRL', 'rio de janeiro': 'BRL',
-    'mexico': 'MXN', 'mexico city': 'MXN',
+    // Canada
+    'canada': 'CAD', 'toronto': 'CAD', 'vancouver': 'CAD',
+    'montreal': 'CAD', 'calgary': 'CAD', 'ottawa': 'CAD',
+    'edmonton': 'CAD', 'winnipeg': 'CAD', 'quebec': 'CAD',
+
+    // Germany
+    'germany': 'EUR', 'berlin': 'EUR', 'munich': 'EUR',
+    'hamburg': 'EUR', 'frankfurt': 'EUR', 'cologne': 'EUR',
+    'stuttgart': 'EUR', 'düsseldorf': 'EUR', 'dusseldorf': 'EUR',
+    'leipzig': 'EUR',
   };
 
   // ─── Format angka dengan currency symbol ──────────────────────────────────

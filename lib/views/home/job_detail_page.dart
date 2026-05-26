@@ -1,12 +1,12 @@
 // lib/views/home/job_detail_page.dart
 //
 // Halaman detail lowongan kerja.
-// Sheet konversi dipindah ke: lib/widgets/conversion_popup.dart
 
 import 'package:flutter/material.dart';
 import 'package:readmore/readmore.dart';
 import '../../data/models/job_model.dart';
-import '../../widgets/conversion_popup.dart'; // ← sheet konversi
+import '../../widgets/currency_converter_sheet.dart';
+import '../../widgets/timezone_converter_sheet.dart';
 import '../../widgets/map_preview_widget.dart';
 
 class JobDetailPage extends StatelessWidget {
