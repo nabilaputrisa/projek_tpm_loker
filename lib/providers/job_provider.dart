@@ -3,12 +3,27 @@ import '../data/models/job_model.dart';
 import '../data/services/api_job_service.dart';
 import '../data/database/database_helper.dart';
 
+// ─── MODEL SALARY RANGE ───────────────────────────────────────────────────────
+class SalaryRange {
+  final double min;
+  final double? max;
+  final String label;
+
+  SalaryRange({
+    required this.min,
+    this.max,
+    required this.label,
+  });
+}
+
+// ─── JOB PROVIDER ────────────────────────────────────────────────────────────
 class JobProvider with ChangeNotifier {
   final ApiJobService _apiService = ApiJobService();
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
   List<JobModel> _jobs = [];
   List<JobModel> _wishlist = [];
+  List<JobModel> _allJobs = [];
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -43,6 +58,7 @@ class JobProvider with ChangeNotifier {
     if (refresh) {
       _currentPage = 1;
       _jobs.clear();
+      _allJobs.clear();
     }
 
     _isLoading = true;
@@ -50,6 +66,10 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Mengambil nilai filter gaji untuk dikirim ke API
+      double? filterMin = _selectedSalaryRange?.min;
+      double? filterMax = _selectedSalaryRange?.max;
+
       final result = await _apiService.fetchJobs(
         query: _searchQuery.isEmpty ? null : _searchQuery,
         location: _selectedLocation == 'Semua Lokasi' ? null : _selectedLocation,
@@ -57,17 +77,23 @@ class JobProvider with ChangeNotifier {
         page: _currentPage,
         sortBy: _sortBy,
         countryCode: _selectedCountry,
-        salaryMin: _selectedSalaryRange?.min,
-        salaryMax: _selectedSalaryRange?.max,
+        salaryMin: (filterMin != null && filterMin > 0) ? filterMin : null, // Kirim ke API jika > 0
+        salaryMax: filterMax, // Kirim ke API jika tidak null
         country: '',
       );
 
       if (result['success'] == true) {
+        List<JobModel> fetchedJobs = result['jobs'];
+        
         if (refresh) {
-          _jobs = result['jobs'];
+          _allJobs = fetchedJobs;
         } else {
-          _jobs.addAll(result['jobs']);
+          _allJobs.addAll(fetchedJobs);
         }
+        
+        // Saring kembali di sisi client menggunakan logika eliminasi irisan rentang
+        _applySalaryFilter();
+        
         _totalJobs = result['total'];
         _totalPages = result['totalPages'];
         _errorMessage = null;
@@ -82,6 +108,39 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ LOGIKA PENYARINGAN ELEMINASI RENTANG GAJI
+  void _applySalaryFilter() {
+    if (_selectedSalaryRange == null) {
+      _jobs = List.from(_allJobs);
+      return;
+    }
+
+    final filterMin = _selectedSalaryRange!.min;
+    final filterMax = _selectedSalaryRange!.max;
+
+    _jobs = _allJobs.where((job) {
+      // Jika user sedang memfilter gaji, sembunyikan lowongan yang tidak mencantumkan info gaji
+      if (job.salaryMin == null && job.salaryMax == null) {
+        return false;
+      }
+
+      final jobMin = job.salaryMin ?? 0;
+      final jobMax = job.salaryMax ?? jobMin;
+
+      // Eliminasi 1: Batas atas lowongan (jobMax) lebih kecil dari filter minimal user (pasti tidak masuk kriteria)
+      if (filterMin > 0 && jobMax < filterMin) {
+        return false;
+      }
+
+      // Eliminasi 2: Batas bawah lowongan (jobMin) melebihi batas maksimal user (pasti kemahalan/di luar kriteria)
+      if (filterMax != null && jobMin > filterMax) {
+        return false;
+      }
+      
+      return true;
+    }).toList();
+  }
+
   Future<void> loadMore() async {
     if (!_isLoading && hasMore) {
       _currentPage++;
@@ -89,11 +148,13 @@ class JobProvider with ChangeNotifier {
     }
   }
 
-  // ========== SETTERS ==========
-
   void setCountry(String code) {
-    _selectedCountry = code;
-    notifyListeners();
+    if (_selectedCountry != code) {
+      _selectedCountry = code;
+      _selectedLocation = 'Semua Lokasi';
+      _selectedSalaryRange = null;
+      notifyListeners();
+    }
   }
 
   void setSalaryRange(SalaryRange? range) {
@@ -132,6 +193,8 @@ class JobProvider with ChangeNotifier {
     _sortBy = 'date';
     _selectedCountry = 'sg';
     _selectedSalaryRange = null;
+    _jobs.clear();
+    _allJobs.clear();
     notifyListeners();
   }
 
@@ -148,7 +211,6 @@ class JobProvider with ChangeNotifier {
         description: '',
         createdAt: DateTime.now(),
         redirectUrl: '',
-        // salary kolom di DB disimpan sebagai string display
         salaryMin: null,
         salaryMax: null,
         salaryDisplay: (row['salary'] as String?) ?? 'Gaji tidak tersedia',
@@ -171,7 +233,6 @@ class JobProvider with ChangeNotifier {
         await _dbHelper.removeFromWishlist(job.id);
         _wishlist.removeWhere((j) => j.id == job.id);
       } else {
-        // Simpan hanya kolom yang ada di tabel wishlist SQLite
         await _dbHelper.addToWishlist({
           'id': job.id,
           'title': job.title,

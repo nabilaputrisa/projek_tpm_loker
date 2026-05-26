@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../providers/job_provider.dart';
 import '../../data/services/api_job_service.dart';
 import '../../widgets/job_card.dart';
 import '../home/job_detail_page.dart';
-
+import 'filter_bottom_sheet.dart'; // Import file filter terpisah
 
 // Import halaman-halaman lain
 import '../tools/ai_consultant_page.dart';
 import '../games/memory_match_game.dart';
-import '../profile/profile_page.dart';    // ← TAMBAHAN
-import '../profile/saved_jobs_page.dart'; // ← TAMBAHAN
+import '../profile/profile_page.dart';
+import '../profile/saved_jobs_page.dart';
 
 // ─── Main Navigation Shell ────────────────────────────────────────────────────
 
@@ -24,11 +25,11 @@ class MainNavigationPage extends StatefulWidget {
 class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
 
-  final List<Widget> _pages = const [
-    HomeTab(),
-    AiConsultantPage(),
-    InterviewSchedulePage(),
-    MemoryMatchGame(),
+  final List<Widget> _pages = [
+    const HomeTab(),
+    const AiConsultantPage(),
+    const InterviewSchedulePage(),
+    const MemoryMatchGame(),
   ];
 
   @override
@@ -251,7 +252,7 @@ class _HomeTabState extends State<HomeTab> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => const FilterBottomSheet(),
+      builder: (context) => const FilterBottomSheet(), // Menggunakan file terpisah
     );
   }
 
@@ -275,7 +276,6 @@ class _HomeTabState extends State<HomeTab> {
         ),
         elevation: 0,
         actions: [
-          // ── Wishlist → SavedJobsPage ──────────────────────────
           IconButton(
             icon: const Icon(Icons.bookmark, color: Colors.white),
             onPressed: () {
@@ -285,7 +285,6 @@ class _HomeTabState extends State<HomeTab> {
               );
             },
           ),
-          // ── Profile → ProfilePage ─────────────────────────────
           IconButton(
             icon: const Icon(Icons.person, color: Colors.white),
             onPressed: () {
@@ -299,7 +298,6 @@ class _HomeTabState extends State<HomeTab> {
       ),
       body: Column(
         children: [
-          // ─── Search Bar & Filter ──────────────────────────────
           Container(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
@@ -382,7 +380,6 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 const SizedBox(height: 10),
 
-                // ─── Active Filter Chips ──────────────────────────
                 Consumer<JobProvider>(
                   builder: (context, provider, _) {
                     final country =
@@ -439,7 +436,6 @@ class _HomeTabState extends State<HomeTab> {
             ),
           ),
 
-          // ─── Job List ─────────────────────────────────────────
           Expanded(
             child: Consumer<JobProvider>(
               builder: (context, jobProvider, child) {
@@ -526,31 +522,30 @@ class _HomeTabState extends State<HomeTab> {
                       final isInWishlist = jobProvider.isInWishlist(job.id);
 
                       return JobCard(
-  job: job, // Objek job dari JobModel[cite: 1]
-  isInWishlist: isInWishlist,
-  onTap: () {
-    // Navigasi ke halaman JobDetailPage yang baru
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => JobDetailPage(job: job),
-      ),
-    );
-  },
-  onWishlistTap: () {
-    jobProvider.toggleWishlist(job);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isInWishlist
-              ? 'Removed from wishlist'
-              : 'Added to wishlist',
-        ),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  },
-);
+                        job: job,
+                        isInWishlist: isInWishlist,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => JobDetailPage(job: job),
+                            ),
+                          );
+                        },
+                        onWishlistTap: () {
+                          jobProvider.toggleWishlist(job);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isInWishlist
+                                    ? 'Removed from wishlist'
+                                    : 'Added to wishlist',
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                      );
                     },
                   ),
                 );
@@ -597,257 +592,6 @@ class _FilterChip extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-// ─── Filter Bottom Sheet ──────────────────────────────────────────────────────
-
-class FilterBottomSheet extends StatefulWidget {
-  const FilterBottomSheet({super.key});
-
-  @override
-  State<FilterBottomSheet> createState() => _FilterBottomSheetState();
-}
-
-class _FilterBottomSheetState extends State<FilterBottomSheet> {
-  final ApiJobService _apiService = ApiJobService();
-
-  late String _selectedCountry;
-  late String _selectedLocation;
-  late String _selectedCategory;
-  late String _sortBy;
-  SalaryRange? _selectedSalaryRange;
-
-  @override
-  void initState() {
-    super.initState();
-    final provider = context.read<JobProvider>();
-    _selectedCountry = provider.selectedCountry;
-    _selectedLocation = provider.selectedLocation;
-    _selectedCategory = provider.selectedCategory;
-    _sortBy = provider.sortBy;
-    _selectedSalaryRange = provider.selectedSalaryRange;
-  }
-
-  void _onCountryChanged(String countryCode) {
-    setState(() {
-      _selectedCountry = countryCode;
-      _selectedLocation = 'Semua Lokasi';
-      _selectedSalaryRange = null;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final countries = _apiService.getAvailableCountries();
-    final locations = _apiService.getLocations(_selectedCountry);
-    final salaryRanges = _apiService.getSalaryRanges(_selectedCountry);
-    final categories = [
-      'Semua Kategori',
-      'it-jobs',
-      'engineering-jobs',
-      'sales-jobs',
-      'customer-services-jobs',
-      'healthcare-nursing-jobs',
-      'teaching-jobs',
-      'accounting-finance-jobs',
-      'legal-jobs',
-      'marketing-jobs',
-      'hr-jobs',
-      'admin-jobs',
-    ];
-
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Text(
-                    'Filter',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
-                    ),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedCountry = 'sg';
-                        _selectedLocation = 'Semua Lokasi';
-                        _selectedCategory = 'Semua Kategori';
-                        _sortBy = 'date';
-                        _selectedSalaryRange = null;
-                      });
-                    },
-                    child: const Text('Reset'),
-                  ),
-                ],
-              ),
-              const Divider(),
-              const SizedBox(height: 12),
-
-              _SectionLabel('🌍 Country'),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedCountry,
-                decoration: _dropdownDecoration(),
-                items: countries.map((entry) {
-                  final code = entry.key;
-                  final config = entry.value;
-                  return DropdownMenuItem(
-                    value: code,
-                    child: Text('${config.flag} ${config.name}'),
-                  );
-                }).toList(),
-                onChanged: (value) => _onCountryChanged(value!),
-              ),
-              const SizedBox(height: 16),
-
-              _SectionLabel('📍 Location'),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedLocation,
-                decoration: _dropdownDecoration(),
-                items: locations.map((loc) {
-                  return DropdownMenuItem(value: loc, child: Text(loc));
-                }).toList(),
-                onChanged: (value) =>
-                    setState(() => _selectedLocation = value!),
-              ),
-              const SizedBox(height: 16),
-
-              _SectionLabel('💼 Category'),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedCategory,
-                decoration: _dropdownDecoration(),
-                items: categories.map((cat) {
-                  return DropdownMenuItem(
-                    value: cat,
-                    child: Text(
-                      cat == 'Semua Kategori'
-                          ? cat
-                          : cat
-                              .replaceAll('-', ' ')
-                              .split(' ')
-                              .map((w) => w.isEmpty
-                                  ? w
-                                  : '${w[0].toUpperCase()}${w.substring(1)}')
-                              .join(' '),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) =>
-                    setState(() => _selectedCategory = value!),
-              ),
-              const SizedBox(height: 16),
-
-              _SectionLabel('💰 Salary Range'),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<SalaryRange?>(
-                value: _selectedSalaryRange,
-                decoration: _dropdownDecoration(),
-                items: [
-                  const DropdownMenuItem(
-                    value: null,
-                    child: Text('All Salaries'),
-                  ),
-                  ...salaryRanges.map((range) {
-                    return DropdownMenuItem(
-                      value: range,
-                      child: Text(range.label),
-                    );
-                  }),
-                ],
-                onChanged: (value) =>
-                    setState(() => _selectedSalaryRange = value),
-              ),
-              const SizedBox(height: 16),
-
-              _SectionLabel('↕ Sort By'),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _sortBy,
-                decoration: _dropdownDecoration(),
-                items: const [
-                  DropdownMenuItem(value: 'date', child: Text('Newest')),
-                  DropdownMenuItem(
-                      value: 'relevance', child: Text('Relevance')),
-                  DropdownMenuItem(
-                      value: 'salary', child: Text('Highest Salary')),
-                ],
-                onChanged: (value) => setState(() => _sortBy = value!),
-              ),
-              const SizedBox(height: 24),
-
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final provider = context.read<JobProvider>();
-                    provider.setCountry(_selectedCountry);
-                    provider.setLocation(_selectedLocation);
-                    provider.setCategory(_selectedCategory);
-                    provider.setSalaryRange(_selectedSalaryRange);
-                    provider.setSortBy(_sortBy);
-                    provider.applyFilters();
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF5E35B1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Apply Filters',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  InputDecoration _dropdownDecoration() {
-    return InputDecoration(
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    );
-  }
-}
-
-// ─── Helper Widget ────────────────────────────────────────────────────────────
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  const _SectionLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
     );
   }
 }
