@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+//import 'package:shared_preferences/shared_preferences.dart';
 
 class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});
@@ -9,104 +9,47 @@ class FeedbackPage extends StatefulWidget {
 }
 
 class _FeedbackPageState extends State<FeedbackPage> {
-  final TextEditingController _feedbackController = TextEditingController();
+  // Data feedback statis
+  final List<Map<String, dynamic>> _staticFeedbacks = [
+    {
+      'name': 'Nabila Putri Salsabila',
+      'nim': '123230002',
+      'rating': 5,
+      'comment':
+          'Mata kuliah Teknologi dan Pemrograman Mobile menyajikan tantangan tersendiri, sekaligus memberikan wawasan mengenai pengembangan aplikasi dari tahap awal hingga implementasi. Metode pembelajaran melalui praktik yang meningkatkan kemampuan berpikir logis, ketelitian, dan analisis pemecahan masalah. Mata kuliah ini sangat relevan, dan diharapkan porsi praktiknya tetap dipertahankan agar lebih siap menghadapi dunia kerja.',
+      'date': '27 Mei 2026',
+      'avatar': 'NPS',
+      'likes': 24,
+    },
+    {
+      'name': 'Miftah Sari Nurjanah',
+      'nim': '123230022',
+      'rating': 5,
+      'comment':
+          'Mengikuti mata kuliah Teknologi Pemrograman Mobile semester ini menjadi tantangan tersendiri bagi saya karena beban tugasnya yang cukup intens. Meski begitu, saya merasa sangat bersyukur. Dari proses yang menguras energi ini, saya bisa mengambil banyak sisi positif, terutama dalam hal manajemen waktu dan adaptasi dengan hal-hal baru. Pengalaman ini mengajarkan saya bagaimana cara bertahan dan menyelesaikan tanggung jawab dengan baik',
+      'date': '27 Mei 2026',
+      'avatar': 'MSN',
+      'likes': 27,
+    },
+  ];
 
-  int _rating = 5;
-  bool _isLoading = false;
-  String? _username;
-  bool _isSubmitted = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _username = prefs.getString('logged_username');
-  }
-
-  Future<void> _submitFeedback() async {
-    if (_feedbackController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Masukkan pesan feedback terlebih dahulu'),
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    // Simulasi pengiriman feedback (tanpa database)
-    await Future.delayed(const Duration(seconds: 1));
-
-    setState(() => _isLoading = false);
-    setState(() => _isSubmitted = true);
-    _feedbackController.clear();
-    setState(() => _rating = 5);
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          '✓ Terima kasih atas feedback Anda untuk mata kuliah TPM!',
-        ),
-        backgroundColor: Colors.green,
-      ),
+  // Statistik rating
+  double get _averageRating {
+    if (_staticFeedbacks.isEmpty) return 0;
+    final total = _staticFeedbacks.fold<int>(
+      0,
+      (sum, item) => sum + (item['rating'] as int),
     );
+    return total / _staticFeedbacks.length;
   }
 
-  String _getRatingText(int rating) {
-    switch (rating) {
-      case 1:
-        return 'Sangat Buruk';
-      case 2:
-        return 'Buruk';
-      case 3:
-        return 'Cukup';
-      case 4:
-        return 'Baik';
-      case 5:
-        return 'Sangat Baik';
-      default:
-        return 'Sangat Baik';
+  Map<int, int> get _ratingDistribution {
+    final Map<int, int> distribution = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+    for (var feedback in _staticFeedbacks) {
+      final rating = feedback['rating'] as int;
+      distribution[rating] = (distribution[rating] ?? 0) + 1;
     }
-  }
-
-  IconData _getRatingIcon(int rating) {
-    switch (rating) {
-      case 1:
-        return Icons.sentiment_very_dissatisfied;
-      case 2:
-        return Icons.sentiment_dissatisfied;
-      case 3:
-        return Icons.sentiment_neutral;
-      case 4:
-        return Icons.sentiment_satisfied;
-      case 5:
-        return Icons.sentiment_very_satisfied;
-      default:
-        return Icons.sentiment_very_satisfied;
-    }
-  }
-
-  Color _getRatingColor(int rating) {
-    switch (rating) {
-      case 1:
-        return Colors.red;
-      case 2:
-        return Colors.orange;
-      case 3:
-        return Colors.yellow.shade700;
-      case 4:
-        return Colors.lightGreen;
-      case 5:
-        return Colors.green;
-      default:
-        return Colors.green;
-    }
+    return distribution;
   }
 
   @override
@@ -162,26 +105,47 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  Text(
+                  const Text(
                     'Teknologi dan Pemrograman Mobile',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 19,
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
+                  // Rating summary
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
+                      horizontal: 16,
+                      vertical: 8,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Text(
-                      _username ?? 'Mahasiswa',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          _averageRating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '(${_staticFeedbacks.length} ulasan)',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -190,232 +154,132 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
             const SizedBox(height: 24),
 
-            // Form Feedback (hanya muncul jika belum submit)
-            if (!_isSubmitted) ...[
-              // Rating Section
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A24),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Berikan Penilaian untuk Mata Kuliah TPM',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(5, (index) {
-                        int ratingValue = index + 1;
-                        return GestureDetector(
-                          onTap: () => setState(() => _rating = ratingValue),
-                          child: Column(
-                            children: [
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _rating >= ratingValue
-                                      ? _getRatingColor(ratingValue)
-                                      : Colors.grey.shade800,
-                                ),
-                                child: Icon(
-                                  _getRatingIcon(ratingValue),
-                                  color: Colors.white,
-                                  size: 32,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                ratingValue.toString(),
-                                style: TextStyle(
-                                  color: _rating >= ratingValue
-                                      ? _getRatingColor(ratingValue)
-                                      : Colors.grey.shade600,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getRatingColor(_rating).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          _getRatingText(_rating),
-                          style: TextStyle(
-                            color: _getRatingColor(_rating),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+            // Statistik Rating
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A24),
+                borderRadius: BorderRadius.circular(16),
               ),
-
-              const SizedBox(height: 16),
-
-              // Feedback Text Field
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A24),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Pesan dan Kesan',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Kritik, saran, atau masukan untuk pengembangan mata kuliah TPM',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _feedbackController,
-                      style: const TextStyle(color: Colors.white),
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: 'Tulis feedback Anda di sini...',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey.shade900,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF6C63FF),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _submitFeedback,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C63FF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Statistik Rating',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                  const SizedBox(height: 16),
+                  ...List.generate(5, (index) {
+                    final rating = 5 - index;
+                    final count = _ratingDistribution[rating] ?? 0;
+                    final percentage = _staticFeedbacks.isEmpty
+                        ? 0
+                        : (count / _staticFeedbacks.length * 100);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 40,
+                            child: Row(
+                              children: [
+                                Text(
+                                  rating.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.star,
+                                  size: 12,
+                                  color: Colors.amber,
+                                ),
+                              ],
+                            ),
                           ),
-                        )
-                      : const Text(
-                          'Kirim Feedback',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: LinearProgressIndicator(
+                                value: percentage / 100,
+                                backgroundColor: Colors.grey.shade800,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF6C63FF),
+                                ),
+                                minHeight: 6,
+                              ),
+                            ),
                           ),
-                        ),
-                ),
+                          SizedBox(
+                            width: 35,
+                            child: Text(
+                              '$count',
+                              style: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
               ),
-            ],
+            ),
 
-            // Tampilan setelah submit
-            if (_isSubmitted) ...[
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A24),
-                  borderRadius: BorderRadius.circular(20),
+            const SizedBox(height: 24),
+
+            // Daftar Feedback
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Ulasan Mahasiswa',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.check_circle_outline,
-                      size: 80,
-                      color: Color(0xFF00D4AA),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF6C63FF).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_staticFeedbacks.length} ulasan',
+                    style: const TextStyle(
+                      color: Color(0xFF6C63FF),
+                      fontSize: 12,
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Terima Kasih!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Feedback Anda sangat berharga untuk\npengembangan mata kuliah TPM',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          setState(() => _isSubmitted = false);
-                          _feedbackController.clear();
-                          setState(() => _rating = 5);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF6C63FF),
-                          side: const BorderSide(color: Color(0xFF6C63FF)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text('Kirim Feedback Lain'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // List Feedback
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _staticFeedbacks.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final feedback = _staticFeedbacks[index];
+                return _buildFeedbackCard(feedback);
+              },
+            ),
 
             const SizedBox(height: 20),
 
@@ -436,7 +300,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Feedback Anda akan membantu dosen pengampu mata kuliah TPM untuk terus meningkatkan kualitas pembelajaran.',
+                      'Data feedback merupakan ulasan dari mahasiswa yang telah mengambil mata kuliah TPM.',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 12,
@@ -449,6 +313,148 @@ class _FeedbackPageState extends State<FeedbackPage> {
             const SizedBox(height: 40),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeedbackCard(Map<String, dynamic> feedback) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A24),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Avatar
+              Container(
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    feedback['avatar'],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      feedback['name'],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      feedback['nim'],
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Rating
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.star, color: Colors.amber, size: 14),
+                    const SizedBox(width: 4),
+                    Text(
+                      feedback['rating'].toString(),
+                      style: const TextStyle(
+                        color: Colors.amber,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Comment
+          Text(
+            feedback['comment'],
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Footer
+          Row(
+            children: [
+              Icon(
+                Icons.access_time,
+                size: 14,
+                color: Colors.white.withOpacity(0.4),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                feedback['date'],
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.4),
+                  fontSize: 11,
+                ),
+              ),
+              const Spacer(),
+              // Like button
+              GestureDetector(
+                onTap: () {
+                  // Like functionality (tidak disimpan, hanya visual)
+                  setState(() {
+                    feedback['likes'] = (feedback['likes'] as int) + 1;
+                  });
+                },
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.favorite_border,
+                      size: 14,
+                      color: Colors.white.withOpacity(0.4),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      feedback['likes'].toString(),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.4),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
