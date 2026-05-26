@@ -154,7 +154,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Mata Kuliah TPM',
+                    'Mata Kuliah',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -163,10 +163,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    'Teknik Pengembangan Multiplatform',
+                    'Teknologi dan Pemrograman Mobile',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.9),
-                      fontSize: 14,
+                      fontSize: 19,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -286,7 +286,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Pesan dan Saran',
+                      'Pesan dan Kesan',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -446,6 +446,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 ],
               ),
             ),
+            const SizedBox(height: 40),
           ],
         ),
       ),

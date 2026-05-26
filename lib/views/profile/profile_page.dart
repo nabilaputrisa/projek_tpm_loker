@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:projektpm/views/profile/saved_jobs_page.dart';
+import 'package:projektpm/views/profile/feedback_page.dart';
 //import 'dart:math' as math;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/database_helper.dart';
@@ -289,46 +289,6 @@ class _ProfilePageState extends State<ProfilePage>
 
                         const Divider(height: 1, color: Colors.white12),
 
-                        ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF6C63FF).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.bookmark,
-                              color: Color(0xFF6C63FF),
-                              size: 22,
-                            ),
-                          ),
-                          title: const Text(
-                            'Pekerjaan Tersimpan',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                          subtitle: Text(
-                            'Lihat company favorit yang sudah disimpan',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.4),
-                              fontSize: 12,
-                            ),
-                          ),
-                          trailing: const Icon(
-                            Icons.chevron_right,
-                            color: Colors.white54,
-                          ),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const SavedJobsPage(),
-                              ),
-                            ).then((_) => _loadUserData());
-                          },
-                        ),
-
-                        const Divider(height: 1, color: Colors.white12),
-
                         // Riwayat Lamaran
                         ListTile(
                           leading: Container(
@@ -363,6 +323,46 @@ class _ProfilePageState extends State<ProfilePage>
                               context,
                               MaterialPageRoute(
                                 builder: (_) => const AppliedJobsPage(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        const Divider(height: 1, color: Colors.white12),
+
+                        ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00D4AA).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.feedback_outlined,
+                              color: Color(0xFF00D4AA),
+                              size: 22,
+                            ),
+                          ),
+                          title: const Text(
+                            'Feedback TPM',
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                          subtitle: Text(
+                            'Beri masukan untuk mata kuliah TPM',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.4),
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white54,
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const FeedbackPage(),
                               ),
                             );
                           },
