@@ -6,8 +6,14 @@
 //   • Tombol "Lokasi Saya" → GPS fokus ke posisi user
 //   • CompassPointer overlay → panah berputar real-time (Magnetometer)
 //   • Snackbar informatif saat error GPS / sensor tidak tersedia
+//
+// PERUBAHAN (FIX BUG 3):
+//   Ditambahkan _HeadingSmoother untuk meredam jitter sensor magnetometer.
+//   Raw sensor noise menyebabkan panah bergetar tiap frame. Moving average
+//   5 sampel menghaluskan pergerakan tanpa menambah lag yang terasa.
 
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -16,6 +22,50 @@ import 'package:geolocator/geolocator.dart';
 
 import '../data/services/location_service.dart';
 import 'compass_pointer.dart';
+
+// ════════════════════════════════════════════════════════════════════════════
+// HEADING SMOOTHER (FIX BUG 3)
+// ════════════════════════════════════════════════════════════════════════════
+
+/// Moving average sederhana untuk heading kompas.
+///
+/// Masalah: Raw magnetometer sangat noisy → panah bergetar terus.
+/// Solusi: Rata-ratakan N sampel terakhir. Dengan [windowSize] = 5
+/// getaran halus teredam tanpa lag yang terasa oleh pengguna.
+///
+/// Catatan khusus heading: rata-rata circular (bukan aritmatika biasa)
+/// dipakai agar transisi 359°→1° tidak menghasilkan 180° (Selatan).
+class _HeadingSmoother {
+  final int windowSize;
+  final List<double> _samples = [];
+
+  _HeadingSmoother({this.windowSize = 5});
+
+  /// Tambahkan sampel baru dan kembalikan heading yang sudah dihaluskan.
+  double add(double heading) {
+    _samples.add(heading);
+    if (_samples.length > windowSize) _samples.removeAt(0);
+    return _average();
+  }
+
+  /// Circular mean: konversi ke vektor unit, rata-ratakan, konversi balik.
+  double _average() {
+    double sinSum = 0;
+    double cosSum = 0;
+    for (final h in _samples) {
+      final rad = h * (math.pi / 180);
+      sinSum += math.sin(rad);
+      cosSum += math.cos(rad);
+    }
+    final avg = math.atan2(sinSum / _samples.length, cosSum / _samples.length);
+    final degrees = avg * (180 / math.pi);
+    return (degrees + 360) % 360; // normalisasi ke 0–360
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MAP PREVIEW WIDGET
+// ════════════════════════════════════════════════════════════════════════════
 
 class MapPreviewWidget extends StatefulWidget {
   final double lat;
@@ -46,6 +96,9 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
 
   // ── Subscriptions ──────────────────────────────────────────────────────────
   StreamSubscription<CompassEvent>? _compassSub;
+
+  // FIX BUG 3: Smoother untuk meredam jitter sensor.
+  final _smoother = _HeadingSmoother(windowSize: 5);
 
   // ── Map style: subtle gray ─────────────────────────────────────────────────
   static const String _mapStyle = '''
@@ -95,7 +148,10 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
     _compassSub = stream.listen((CompassEvent event) {
       final h = event.heading;
       if (h != null && mounted) {
-        setState(() => _heading = h);
+        // FIX BUG 3: Gunakan smoothed heading, bukan raw.
+        // Tanpa ini: setState dipanggil setiap event mentah → panah jitter.
+        final smoothed = _smoother.add(h);
+        setState(() => _heading = smoothed);
       }
     });
   }
@@ -133,9 +189,11 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? const Color(0xFFD32F2F) : const Color(0xFF2D6A9F),
+        backgroundColor:
+            isError ? const Color(0xFFD32F2F) : const Color(0xFF2D6A9F),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.all(16),
       ),
     );
@@ -149,7 +207,6 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
     final officeLatLng = LatLng(widget.lat, widget.lng);
 
     return {
-      // Marker kantor
       Marker(
         markerId: const MarkerId('office'),
         position: officeLatLng,
@@ -159,14 +216,13 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
         ),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
       ),
-
-      // Marker posisi user (hanya tampil setelah tombol ditekan)
       if (_userLatLng != null)
         Marker(
           markerId: const MarkerId('user'),
           position: _userLatLng!,
           infoWindow: const InfoWindow(title: 'Posisi Saya'),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
         ),
     };
   }
@@ -183,15 +239,14 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
       height: 280,
       child: Stack(
         children: [
-          // ── Google Map ─────────────────────────────────────────────────
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: officeLatLng,
               zoom: 15,
             ),
             markers: _markers,
-            myLocationEnabled: true,        // titik biru native Google Maps
-            myLocationButtonEnabled: false, // kita ganti dengan tombol custom
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             mapToolbarEnabled: false,
             onMapCreated: (GoogleMapController ctrl) {
@@ -199,16 +254,12 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
               ctrl.setMapStyle(_mapStyle);
             },
           ),
-
-          // ── CompassPointer (Magnetometer overlay) ──────────────────────
           if (_compassAvailable)
             Positioned(
               top: 12,
               left: 12,
               child: _CompassBadge(heading: _heading),
             ),
-
-          // ── Tombol "Lokasi Saya" ───────────────────────────────────────
           Positioned(
             bottom: 12,
             right: 12,
@@ -217,8 +268,6 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
               onTap: _goToMyLocation,
             ),
           ),
-
-          // ── Label "Sensor tidak tersedia" ──────────────────────────────
           if (!_compassAvailable)
             Positioned(
               top: 12,
@@ -232,10 +281,9 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// SUB-WIDGETS
+// SUB-WIDGETS (tidak berubah dari versi asli)
 // ════════════════════════════════════════════════════════════════════════════
 
-/// Kotak kompas kecil di pojok kiri atas peta.
 class _CompassBadge extends StatelessWidget {
   final double heading;
 
@@ -299,7 +347,6 @@ class _CompassBadge extends StatelessWidget {
   }
 }
 
-/// Tombol bulat "Lokasi Saya" dengan loading state.
 class _MyLocationButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
@@ -345,7 +392,6 @@ class _MyLocationButton extends StatelessWidget {
   }
 }
 
-/// Badge kecil saat sensor magnetometer tidak tersedia di perangkat.
 class _SensorUnavailableBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

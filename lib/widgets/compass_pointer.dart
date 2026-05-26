@@ -21,6 +21,16 @@ class CompassPointer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // FIX BUG 1: Tanda POSITIF, bukan negatif.
+    //
+    // Logika yang benar:
+    //   - Panah secara default menunjuk ke atas (Utara = 0°).
+    //   - Flutter Transform.rotate dengan sudut positif → berputar SEARAH jarum jam.
+    //   - heading 90° (Timur) → panah harus berputar 90° ke kanan (searah jarum jam).
+    //   - Jadi angle = +radians, bukan -radians.
+    //
+    // Kesalahan sebelumnya: angle: -radians
+    //   Akibatnya: heading 90° → panah ke Barat (terbalik).
     final radians = heading * (math.pi / 180);
 
     return Container(
@@ -38,9 +48,11 @@ class CompassPointer extends StatelessWidget {
         ],
       ),
       child: Transform.rotate(
-        angle: -radians, // negatif: heading 0° → panah ke atas (Utara)
+        angle: radians, // FIX: positif → searah jarum jam = benar
         child: CustomPaint(
-          painter: _CompassArrowPainter(),
+          // FIX BUG 2: Teruskan heading ke painter agar shouldRepaint bisa
+          // membandingkan nilai lama vs baru secara akurat.
+          painter: _CompassArrowPainter(heading: heading),
         ),
       ),
     );
@@ -49,6 +61,11 @@ class CompassPointer extends StatelessWidget {
 
 /// Melukis panah kompas dua warna (merah = Utara, abu = Selatan).
 class _CompassArrowPainter extends CustomPainter {
+  // FIX BUG 2: Tambah parameter heading agar shouldRepaint bisa bekerja.
+  final double heading;
+
+  const _CompassArrowPainter({required this.heading});
+
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
@@ -57,10 +74,10 @@ class _CompassArrowPainter extends CustomPainter {
 
     // ── Panah Utara (merah) ───────────────────────────────────────────
     final northPath = Path()
-      ..moveTo(cx, cy - r)          // ujung atas
-      ..lineTo(cx + r * 0.35, cy)   // kanan tengah
-      ..lineTo(cx, cy - r * 0.15)   // lekuk dalam
-      ..lineTo(cx - r * 0.35, cy)   // kiri tengah
+      ..moveTo(cx, cy - r)         // ujung atas
+      ..lineTo(cx + r * 0.35, cy)  // kanan tengah
+      ..lineTo(cx, cy - r * 0.15)  // lekuk dalam
+      ..lineTo(cx - r * 0.35, cy)  // kiri tengah
       ..close();
 
     canvas.drawPath(
@@ -72,10 +89,10 @@ class _CompassArrowPainter extends CustomPainter {
 
     // ── Panah Selatan (abu-abu) ────────────────────────────────────────
     final southPath = Path()
-      ..moveTo(cx, cy + r)          // ujung bawah
-      ..lineTo(cx + r * 0.35, cy)   // kanan tengah
-      ..lineTo(cx, cy + r * 0.15)   // lekuk dalam
-      ..lineTo(cx - r * 0.35, cy)   // kiri tengah
+      ..moveTo(cx, cy + r)         // ujung bawah
+      ..lineTo(cx + r * 0.35, cy)  // kanan tengah
+      ..lineTo(cx, cy + r * 0.15)  // lekuk dalam
+      ..lineTo(cx - r * 0.35, cy)  // kiri tengah
       ..close();
 
     canvas.drawPath(
@@ -94,5 +111,9 @@ class _CompassArrowPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_CompassArrowPainter old) => false;
+  // FIX BUG 2: Repaint hanya jika heading benar-benar berubah.
+  // Sebelumnya selalu `false` → painter tidak pernah tahu harus repaint.
+  // (Meski rotasi ditangani Transform.rotate di atas, ini tetap best practice
+  // agar painter selalu sinkron dengan state yang benar.)
+  bool shouldRepaint(_CompassArrowPainter old) => old.heading != heading;
 }
