@@ -5,13 +5,13 @@ import '../../providers/job_provider.dart';
 import '../../data/services/api_job_service.dart';
 import '../../widgets/job_card.dart';
 import '../home/job_detail_page.dart';
-import 'filter_bottom_sheet.dart'; // Import file filter terpisah
+import 'filter_bottom_sheet.dart';
 
-// Import halaman-halaman lain
 import '../tools/ai_consultant_page.dart';
 import '../games/memory_match_game.dart';
 import '../profile/profile_page.dart';
 import '../profile/saved_jobs_page.dart';
+import '../interview/interview_page.dart';
 
 // ─── Main Navigation Shell ────────────────────────────────────────────────────
 
@@ -28,7 +28,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   final List<Widget> _pages = [
     const HomeTab(),
     const AiConsultantPage(),
-    const InterviewSchedulePage(),
+    const InterviewPage(),
     const MemoryMatchGame(),
   ];
 
@@ -163,52 +163,6 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-// ─── Placeholder untuk InterviewSchedulePage ──────────────────────────────────
-
-class InterviewSchedulePage extends StatelessWidget {
-  const InterviewSchedulePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Jadwal Interview',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        elevation: 0,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_month, size: 64, color: Color(0xFF5E35B1)),
-            SizedBox(height: 16),
-            Text(
-              'Jadwal Interview',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Hubungkan dengan interview_schedule_page.dart',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 // ─── Home Tab ─────────────────────────────────────────────────────────────────
 
 class HomeTab extends StatefulWidget {
@@ -252,7 +206,7 @@ class _HomeTabState extends State<HomeTab> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => const FilterBottomSheet(), // Menggunakan file terpisah
+      builder: (context) => const FilterBottomSheet(),
     );
   }
 
@@ -379,7 +333,6 @@ class _HomeTabState extends State<HomeTab> {
                   ],
                 ),
                 const SizedBox(height: 10),
-
                 Consumer<JobProvider>(
                   builder: (context, provider, _) {
                     final country =
@@ -435,7 +388,6 @@ class _HomeTabState extends State<HomeTab> {
               ],
             ),
           ),
-
           Expanded(
             child: Consumer<JobProvider>(
               builder: (context, jobProvider, child) {

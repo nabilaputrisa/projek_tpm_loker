@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'providers/job_provider.dart';
+import 'providers/interview_provider.dart';
+import 'data/services/notification_service.dart';
 import 'views/auth/login_page.dart';
 import 'views/home/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // TODO: Inisialisasi notifikasi, timezone, dll
-
+  await initializeDateFormatting('id_ID', null);
+  await NotificationService().init();
+  await NotificationService().requestPermission();
   runApp(const MyApp());
 }
 
@@ -20,7 +23,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => JobProvider()),
-        // TODO: Tambah provider lain (ThemeProvider, CompassProvider, dll)
+        ChangeNotifierProvider(create: (_) => InterviewProvider()),
       ],
       child: MaterialApp(
         title: 'Career Portal',
@@ -38,13 +41,10 @@ class MyApp extends StatelessWidget {
             elevation: 0,
           ),
         ),
-        // Untuk testing, langsung ke HomePage
-        // Nanti ganti ke LoginPage setelah siap
-        home: const LoginPage(), // ← ganti dari HomePage
+        home: const LoginPage(),
         routes: {
           '/login': (context) => const LoginPage(),
-          '/home': (context) =>
-              const MainNavigationPage(), // ← ganti dari HomePage
+          '/home': (context) => const MainNavigationPage(),
         },
       ),
     );

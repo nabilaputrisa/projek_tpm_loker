@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -9,7 +10,6 @@ class DatabaseHelper {
   static Database? _database;
 
   factory DatabaseHelper() => _instance;
-
   DatabaseHelper._internal();
 
   Future<Database> get database async {
@@ -22,14 +22,13 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'job_portal.db');
     return await openDatabase(
       path,
-      version: 5, // Naikkan versi ke 5
+      version: 6,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _onCreate(Database db, int version) async {
-    // Tabel users dengan semua kolom lengkap
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,13 +64,12 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         job_title TEXT NOT NULL,
         company_name TEXT NOT NULL,
-        interview_time TEXT NOT NULL,
-        location_coords TEXT,
+        notes TEXT,
+        interview_date_time TEXT NOT NULL,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');
 
-    // Tabel applied_jobs untuk menyimpan riwayat lamaran
     await db.execute('''
       CREATE TABLE applied_jobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -87,7 +85,6 @@ class DatabaseHelper {
       )
     ''');
 
-    // Tabel saved_company_favorites untuk menyimpan perusahaan favorit
     await db.execute('''
       CREATE TABLE saved_company_favorites (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,35 +100,28 @@ class DatabaseHelper {
     ''');
   }
 
-  // Perbaikan logic onUpgrade
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    print('Upgrading database from v$oldVersion to v$newVersion');
+    debugPrint('Upgrading database from v$oldVersion to v$newVersion');
 
-    // Upgrade ke versi 2: tambah category dan contract_type ke wishlist
     if (oldVersion < 2) {
       try {
         await db.execute('ALTER TABLE wishlist ADD COLUMN category TEXT');
         await db.execute('ALTER TABLE wishlist ADD COLUMN contract_type TEXT');
-        print('✓ Upgrade ke v2 berhasil');
       } catch (e) {
-        print('Error upgrade ke v2: $e');
+        debugPrint('Error upgrade v2: $e');
       }
     }
 
-    // Upgrade ke versi 3: tambah full_name dan email ke users
     if (oldVersion < 3) {
       try {
         await db.execute('ALTER TABLE users ADD COLUMN full_name TEXT');
         await db.execute('ALTER TABLE users ADD COLUMN email TEXT');
-        print('✓ Upgrade ke v3 berhasil');
       } catch (e) {
-        print('Error upgrade ke v3: $e');
+        debugPrint('Error upgrade v3 (users): $e');
       }
-
-      // Buat tabel applied_jobs
       try {
         await db.execute('''
-          CREATE TABLE applied_jobs (
+          CREATE TABLE IF NOT EXISTS applied_jobs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             job_id TEXT NOT NULL,
@@ -144,23 +134,19 @@ class DatabaseHelper {
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
           )
         ''');
-        print('✓ Tabel applied_jobs dibuat');
       } catch (e) {
-        print('Error membuat applied_jobs: $e');
+        debugPrint('Error upgrade v3 (applied_jobs): $e');
       }
     }
 
-    // Upgrade ke versi 4: tambah kolom profile_image
     if (oldVersion < 4) {
       try {
         await db.execute('ALTER TABLE users ADD COLUMN profile_image TEXT');
-        print('✓ Upgrade ke v4 berhasil (profile_image)');
       } catch (e) {
-        print('Error upgrade ke v4: $e');
+        debugPrint('Error upgrade v4: $e');
       }
     }
 
-    // Upgrade ke versi 5: tambah gender, education, skills, cv_path, bio
     if (oldVersion < 5) {
       try {
         await db.execute('ALTER TABLE users ADD COLUMN gender TEXT');
@@ -168,17 +154,12 @@ class DatabaseHelper {
         await db.execute('ALTER TABLE users ADD COLUMN skills TEXT');
         await db.execute('ALTER TABLE users ADD COLUMN cv_path TEXT');
         await db.execute('ALTER TABLE users ADD COLUMN bio TEXT');
-        print(
-          '✓ Upgrade ke v5 berhasil (gender, education, skills, cv_path, bio)',
-        );
       } catch (e) {
-        print('Error upgrade ke v5: $e');
+        debugPrint('Error upgrade v5 (users): $e');
       }
-
-      // Buat tabel saved_company_favorites
       try {
         await db.execute('''
-          CREATE TABLE saved_company_favorites (
+          CREATE TABLE IF NOT EXISTS saved_company_favorites (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             job_id TEXT NOT NULL,
@@ -190,9 +171,42 @@ class DatabaseHelper {
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
           )
         ''');
-        print('✓ Tabel saved_company_favorites dibuat');
       } catch (e) {
-        print('Error membuat saved_company_favorites: $e');
+        debugPrint('Error upgrade v5 (saved_company_favorites): $e');
+      }
+    }
+
+    // Upgrade v6: restrukturisasi tabel interviews
+    // Tambah kolom notes, rename interview_time -> interview_date_time,
+    // hapus location_coords
+    if (oldVersion < 6) {
+      try {
+        // SQLite tidak support DROP COLUMN / RENAME COLUMN di versi lama,
+        // jadi pakai strategi: buat tabel baru, copy data, drop lama, rename
+        await db.execute('''
+          CREATE TABLE interviews_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_title TEXT NOT NULL,
+            company_name TEXT NOT NULL,
+            notes TEXT,
+            interview_date_time TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+          )
+        ''');
+
+        // Migrasi data lama — interview_time dipindah ke interview_date_time
+        await db.execute('''
+          INSERT INTO interviews_new (id, job_title, company_name, notes, interview_date_time, created_at)
+          SELECT id, job_title, company_name, NULL, interview_time, created_at
+          FROM interviews
+        ''');
+
+        await db.execute('DROP TABLE interviews');
+        await db.execute('ALTER TABLE interviews_new RENAME TO interviews');
+
+        debugPrint('Upgrade v6 berhasil: tabel interviews distrukturisasi');
+      } catch (e) {
+        debugPrint('Error upgrade v6 (interviews): $e');
       }
     }
   }
@@ -206,7 +220,7 @@ class DatabaseHelper {
 
   Future<int> registerUser(String username, String password) async {
     final db = await database;
-    List<Map<String, dynamic>> existing = await db.query(
+    final existing = await db.query(
       'users',
       where: 'username = ?',
       whereArgs: [username],
@@ -220,7 +234,7 @@ class DatabaseHelper {
       'gender': '',
       'education': '',
       'skills': '',
-      'cv_path': '',
+      'cv_path': null,
       'bio': '',
       'profile_image': '',
     });
@@ -248,7 +262,8 @@ class DatabaseHelper {
 
   // ========== PROFILE METHODS ==========
 
-  // Update user profile (lengkap)
+  static const Object _sentinel = Object();
+
   Future<void> updateUserProfileFull(
     String username, {
     required String fullName,
@@ -256,42 +271,43 @@ class DatabaseHelper {
     String? gender,
     String? education,
     List<String>? skills,
-    String? cvPath,
+    Object? cvPath = _sentinel,
     String? bio,
     String? profileImagePath,
     String? newPassword,
   }) async {
     final db = await database;
 
-    Map<String, dynamic> updateData = {'full_name': fullName, 'email': email};
+    final Map<String, dynamic> updateData = {
+      'full_name': fullName,
+      'email': email,
+      'gender': gender ?? '',
+      'education': education ?? '',
+      'skills': skills != null ? skills.join(',') : '',
+      'bio': bio ?? '',
+    };
 
-    if (gender != null) updateData['gender'] = gender;
-    if (education != null) updateData['education'] = education;
-    if (skills != null) updateData['skills'] = skills.join(',');
-    if (cvPath != null) updateData['cv_path'] = cvPath;
-    if (bio != null) updateData['bio'] = bio;
-    if (profileImagePath != null)
+    if (!identical(cvPath, _sentinel)) {
+      updateData['cv_path'] = cvPath;
+    }
+    if (profileImagePath != null) {
       updateData['profile_image'] = profileImagePath;
+    }
     if (newPassword != null && newPassword.isNotEmpty) {
       updateData['password'] = _hashPassword(newPassword);
     }
-    if (cvPath != null) {
-      updateData['cv_path'] = cvPath;
-    } else {
-      updateData['cv_path'] = null;
-    }
 
-    print('Update data: $updateData');
+    debugPrint('updateUserProfileFull: $updateData');
 
-    await db.update(
+    final rows = await db.update(
       'users',
       updateData,
       where: 'username = ?',
       whereArgs: [username],
     );
+    debugPrint('Rows affected: $rows');
   }
 
-  // Update profile image
   Future<void> updateProfileImage(String username, String imagePath) async {
     final db = await database;
     await db.update(
@@ -302,7 +318,6 @@ class DatabaseHelper {
     );
   }
 
-  // Update user profile sederhana (untuk kompatibilitas)
   Future<void> updateUserProfile(
     String username,
     String fullName,
@@ -317,26 +332,104 @@ class DatabaseHelper {
     );
   }
 
-  // ========== SAVED COMPANY FAVORITES (PEKERJAAN TERSIMPAN) ==========
+  // ========== INTERVIEW ==========
 
-  // Simpan company favorit
+  /// Tambah jadwal interview baru
+  Future<int> addInterview({
+    required String jobTitle,
+    required String companyName,
+    String? notes,
+    required DateTime interviewDateTime,
+  }) async {
+    final db = await database;
+    return await db.insert('interviews', {
+      'job_title': jobTitle,
+      'company_name': companyName,
+      'notes': notes,
+      'interview_date_time': interviewDateTime.toIso8601String(),
+      'created_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  /// Ambil semua jadwal, diurutkan dari yang paling dekat
+  Future<List<Map<String, dynamic>>> getAllInterviews() async {
+    final db = await database;
+    return await db.query(
+      'interviews',
+      orderBy: 'interview_date_time ASC',
+    );
+  }
+
+  /// Ambil jadwal yang akan datang (interview_date_time >= sekarang)
+  Future<List<Map<String, dynamic>>> getUpcomingInterviews() async {
+    final db = await database;
+    return await db.query(
+      'interviews',
+      where: 'interview_date_time >= ?',
+      whereArgs: [DateTime.now().toIso8601String()],
+      orderBy: 'interview_date_time ASC',
+    );
+  }
+
+  /// Ambil satu jadwal berdasarkan id
+  Future<Map<String, dynamic>?> getInterviewById(int id) async {
+    final db = await database;
+    final res = await db.query(
+      'interviews',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return res.isNotEmpty ? res.first : null;
+  }
+
+  /// Update jadwal interview
+  Future<int> updateInterview({
+    required int id,
+    required String jobTitle,
+    required String companyName,
+    String? notes,
+    required DateTime interviewDateTime,
+  }) async {
+    final db = await database;
+    return await db.update(
+      'interviews',
+      {
+        'job_title': jobTitle,
+        'company_name': companyName,
+        'notes': notes,
+        'interview_date_time': interviewDateTime.toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Hapus jadwal interview
+  Future<int> deleteInterview(int id) async {
+    final db = await database;
+    return await db.delete(
+      'interviews',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  // ========== SAVED COMPANY FAVORITES ==========
+
   Future<int> saveCompanyFavorite(
     String username,
     Map<String, dynamic> job,
   ) async {
     final db = await database;
-
     final user = await getUserByUsername(username);
     if (user == null) return 0;
 
-    // Cek apakah sudah ada
     final existing = await db.query(
       'saved_company_favorites',
       where: 'user_id = ? AND job_id = ?',
       whereArgs: [user['id'], job['id']],
     );
-
-    if (existing.isNotEmpty) return 0; // Sudah ada
+    if (existing.isNotEmpty) return 0;
 
     return await db.insert('saved_company_favorites', {
       'user_id': user['id'],
@@ -349,15 +442,12 @@ class DatabaseHelper {
     });
   }
 
-  // Ambil semua company favorit user
   Future<List<Map<String, dynamic>>> getSavedCompanyFavorites(
     String username,
   ) async {
     final db = await database;
-
     final user = await getUserByUsername(username);
     if (user == null) return [];
-
     return await db.query(
       'saved_company_favorites',
       where: 'user_id = ?',
@@ -366,13 +456,10 @@ class DatabaseHelper {
     );
   }
 
-  // Hapus company favorit
   Future<int> removeCompanyFavorite(String username, String jobId) async {
     final db = await database;
-
     final user = await getUserByUsername(username);
     if (user == null) return 0;
-
     return await db.delete(
       'saved_company_favorites',
       where: 'user_id = ? AND job_id = ?',
@@ -380,39 +467,32 @@ class DatabaseHelper {
     );
   }
 
-  // Cek apakah company sudah difavoritkan
   Future<bool> isCompanyFavorite(String username, String jobId) async {
     final db = await database;
-
     final user = await getUserByUsername(username);
     if (user == null) return false;
-
     final result = await db.query(
       'saved_company_favorites',
       where: 'user_id = ? AND job_id = ?',
       whereArgs: [user['id'], jobId],
     );
-
     return result.isNotEmpty;
   }
 
-  // ========== APPLIED JOBS METHODS ==========
+  // ========== APPLIED JOBS ==========
 
-  // Simpan lamaran pekerjaan
-  Future<void> saveAppliedJob(String username, Map<String, dynamic> job) async {
+  Future<void> saveAppliedJob(
+      String username, Map<String, dynamic> job) async {
     final db = await database;
-
     final user = await getUserByUsername(username);
     if (user == null) return;
 
-    // Cek apakah sudah pernah melamar job ini
     final existing = await db.query(
       'applied_jobs',
       where: 'user_id = ? AND job_id = ?',
       whereArgs: [user['id'], job['id']],
     );
-
-    if (existing.isNotEmpty) return; // Sudah pernah melamar
+    if (existing.isNotEmpty) return;
 
     await db.insert('applied_jobs', {
       'user_id': user['id'],
@@ -426,13 +506,10 @@ class DatabaseHelper {
     });
   }
 
-  // Ambil semua lamaran user
   Future<List<Map<String, dynamic>>> getAppliedJobs(String username) async {
     final db = await database;
-
     final user = await getUserByUsername(username);
     if (user == null) return [];
-
     return await db.query(
       'applied_jobs',
       where: 'user_id = ?',
@@ -441,29 +518,22 @@ class DatabaseHelper {
     );
   }
 
-  // Cek apakah sudah melamar job tertentu
   Future<bool> hasApplied(String username, String jobId) async {
     final db = await database;
-
     final user = await getUserByUsername(username);
     if (user == null) return false;
-
     final result = await db.query(
       'applied_jobs',
       where: 'user_id = ? AND job_id = ?',
       whereArgs: [user['id'], jobId],
     );
-
     return result.isNotEmpty;
   }
 
-  // Hapus lamaran (opsional)
   Future<int> removeAppliedJob(String username, String jobId) async {
     final db = await database;
-
     final user = await getUserByUsername(username);
     if (user == null) return 0;
-
     return await db.delete(
       'applied_jobs',
       where: 'user_id = ? AND job_id = ?',
@@ -494,46 +564,11 @@ class DatabaseHelper {
 
   Future<bool> isInWishlist(String jobId) async {
     final db = await database;
-    final res = await db.query('wishlist', where: 'id = ?', whereArgs: [jobId]);
+    final res =
+        await db.query('wishlist', where: 'id = ?', whereArgs: [jobId]);
     return res.isNotEmpty;
   }
 
-  // ========== INTERVIEW ==========
-
-  Future<int> addInterview(Map<String, dynamic> interview) async {
-    final db = await database;
-    return await db.insert('interviews', interview);
-  }
-
-  Future<List<Map<String, dynamic>>> getAllInterviews() async {
-    final db = await database;
-    return await db.query('interviews', orderBy: 'interview_time ASC');
-  }
-
-  Future<int> updateInterview(int id, Map<String, dynamic> interview) async {
-    final db = await database;
-    return await db.update(
-      'interviews',
-      interview,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-  }
-
-  Future<int> deleteInterview(int id) async {
-    final db = await database;
-    return await db.delete('interviews', where: 'id = ?', whereArgs: [id]);
-  }
-
-  // Tambahkan method baru di database_helper.dart
-  Future<void> deleteCvPath(String username) async {
-    final db = await database;
-    await db.rawUpdate('UPDATE users SET cv_path = NULL WHERE username = ?', [
-      null,
-      username,
-    ]);
-    print('CV path deleted from database for user: $username');
-  }
   // ========== UTILITY ==========
 
   Future<void> clearAllData() async {

@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import '../../data/database/database_helper.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -20,6 +21,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
 
   String? _username;
   bool _isLoading = true;
@@ -30,6 +32,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   List<String> _selectedSkills = [];
   File? _cvFile;
   String? _existingCvPath;
+  bool _cvDeleted = false;
+
+  File? _profileImageFile;
+  String? _existingProfileImagePath;
 
   final List<String> _genderOptions = ['Laki-laki', 'Perempuan'];
   final List<String> _educationOptions = ['SMA/SMK', 'D3', 'S1', 'S2', 'S3'];
@@ -77,35 +83,32 @@ class _EditProfilePageState extends State<EditProfilePage> {
           setState(() {
             _userProfile = userData ?? {};
 
-            // Set text controllers dengan nilai yang ada atau kosong
             _nameController.text = _userProfile['full_name'] ?? '';
             _emailController.text = _userProfile['email'] ?? '';
             _bioController.text = _userProfile['bio'] ?? '';
 
-            // PERBAIKAN: Set dropdown values dengan null safety
             final gender = _userProfile['gender'];
-            _selectedGender = (gender != null && gender.isNotEmpty)
-                ? gender
-                : null;
+            _selectedGender =
+                (gender != null && gender.toString().isNotEmpty) ? gender : null;
 
             final education = _userProfile['education'];
-            _selectedEducation = (education != null && education.isNotEmpty)
-                ? education
-                : null;
+            _selectedEducation =
+                (education != null && education.toString().isNotEmpty)
+                    ? education
+                    : null;
 
-            // Set skills
             final skillsStr = _userProfile['skills'];
-            if (skillsStr != null && skillsStr.isNotEmpty) {
-              _selectedSkills = skillsStr.split(',');
-            } else {
-              _selectedSkills = [];
-            }
+            _selectedSkills =
+                (skillsStr != null && skillsStr.toString().isNotEmpty)
+                    ? skillsStr.toString().split(',')
+                    : [];
 
-            // Set CV
-            _existingCvPath = _userProfile['cv_path'];
-            if (_existingCvPath != null && _existingCvPath!.isNotEmpty) {
-              final file = File(_existingCvPath!);
+            // Load CV
+            final cvPath = _userProfile['cv_path'];
+            if (cvPath != null && cvPath.toString().isNotEmpty) {
+              final file = File(cvPath.toString());
               if (file.existsSync()) {
+                _existingCvPath = cvPath.toString();
                 _cvFile = file;
               } else {
                 _existingCvPath = null;
@@ -116,18 +119,124 @@ class _EditProfilePageState extends State<EditProfilePage> {
               _cvFile = null;
             }
 
+            // Load profile image
+            final profileImage = _userProfile['profile_image'];
+            if (profileImage != null && profileImage.toString().isNotEmpty) {
+              final file = File(profileImage.toString());
+              if (file.existsSync()) {
+                _existingProfileImagePath = profileImage.toString();
+                _profileImageFile = file;
+              } else {
+                _existingProfileImagePath = null;
+                _profileImageFile = null;
+              }
+            } else {
+              _existingProfileImagePath = null;
+              _profileImageFile = null;
+            }
+
+            _cvDeleted = false;
             _isLoading = false;
           });
         }
-      } else if (mounted) {
-        setState(() => _isLoading = false);
+      } else {
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
-      print('Error loading data: $e');
+      debugPrint('Error loading data: $e');
       if (mounted) {
         setState(() => _isLoading = false);
         _showSnackBar('Error loading data', backgroundColor: Colors.red);
       }
+    }
+  }
+
+  // Pilih foto profil — tampilkan pilihan kamera atau galeri
+  Future<void> _pickProfileImage() async {
+    if (!mounted) return;
+
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: this.context,
+      backgroundColor: const Color(0xFF1A1A24),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(top: 12, bottom: 16),
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Text(
+              'Pilih Foto Profil',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_rounded,
+                  color: Color(0xFF6C63FF)),
+              title: const Text('Kamera',
+                  style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_rounded,
+                  color: Color(0xFF6C63FF)),
+              title: const Text('Galeri',
+                  style: TextStyle(color: Colors.white)),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    try {
+      final XFile? picked = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 512,
+        maxHeight: 512,
+      );
+
+      if (picked != null && mounted) {
+        setState(() {
+          _profileImageFile = File(picked.path);
+          _existingProfileImagePath = null;
+        });
+        _showSnackBar('Foto berhasil dipilih', backgroundColor: Colors.green);
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      _showSnackBar('Gagal memilih foto: $e', backgroundColor: Colors.red);
+    }
+  }
+
+  Future<String?> _saveProfileImageToLocal(File file) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName =
+          'profile_${_username}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final path = join(directory.path, fileName);
+      await file.copy(path);
+      debugPrint('Profile image saved to: $path');
+      return path;
+    } catch (e) {
+      debugPrint('Error saving profile image: $e');
+      return null;
     }
   }
 
@@ -138,9 +247,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
         allowedExtensions: ['pdf'],
       );
 
-      if (result != null && mounted) {
+      if (result != null && result.files.single.path != null && mounted) {
         setState(() {
           _cvFile = File(result.files.single.path!);
+          _existingCvPath = null;
+          _cvDeleted = false;
         });
         _showSnackBar('CV berhasil dipilih', backgroundColor: Colors.green);
       }
@@ -150,35 +261,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _openCV() async {
-    String? filePath;
+    final filePath = _cvFile?.path ?? _existingCvPath;
 
-    if (_cvFile != null && await _cvFile!.exists()) {
-      filePath = _cvFile!.path;
-    } else if (_existingCvPath != null && _existingCvPath!.isNotEmpty) {
-      filePath = _existingCvPath;
+    if (filePath == null || filePath.isEmpty) {
+      _showSnackBar('Belum ada CV yang diupload',
+          backgroundColor: Colors.orange);
+      return;
     }
 
-    if (filePath == null) {
-      _showSnackBar(
-        'Belum ada CV yang diupload',
-        backgroundColor: Colors.orange,
-      );
+    final file = File(filePath);
+    if (!await file.exists()) {
+      _showSnackBar('File CV tidak ditemukan', backgroundColor: Colors.orange);
       return;
     }
 
     try {
       final result = await OpenFilex.open(filePath);
       if (result.type != ResultType.done) {
-        _showSnackBar(
-          'Gagal membuka file: ${result.message}',
-          backgroundColor: Colors.red,
-        );
+        _showSnackBar('Gagal membuka file: ${result.message}',
+            backgroundColor: Colors.red);
       }
     } catch (e) {
-      _showSnackBar(
-        'Tidak dapat membuka file CV: $e',
-        backgroundColor: Colors.red,
-      );
+      _showSnackBar('Tidak dapat membuka file CV: $e',
+          backgroundColor: Colors.red);
     }
   }
 
@@ -186,79 +291,76 @@ class _EditProfilePageState extends State<EditProfilePage> {
     if (!mounted) return;
 
     final bool? confirmDelete = await showDialog<bool>(
-      context: context as BuildContext,
-      builder: (BuildContext context) {
+      context: this.context,
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1A1A24),
-          title: const Text('Hapus CV', style: TextStyle(color: Colors.white)),
+          title:
+              const Text('Hapus CV', style: TextStyle(color: Colors.white)),
           content: const Text(
             'Apakah Anda yakin ingin menghapus file CV ini?',
             style: TextStyle(color: Colors.white70),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text(
-                'Batal',
-                style: TextStyle(color: Colors.white54),
-              ),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Batal',
+                  style: TextStyle(color: Colors.white54)),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child:
+                  const Text('Hapus', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
       },
     );
 
-    if (confirmDelete != true) return;
+    if (confirmDelete != true || !mounted) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // Hapus file fisik
       final pathToDelete = _cvFile?.path ?? _existingCvPath;
       if (pathToDelete != null && pathToDelete.isNotEmpty) {
         final file = File(pathToDelete);
         if (await file.exists()) {
           await file.delete();
-          print('✅ File CV deleted: $pathToDelete');
+          debugPrint('File CV deleted: $pathToDelete');
         }
       }
 
-      // Update database
       if (_username != null) {
         await _dbHelper.updateUserProfileFull(
           _username!,
-          cvPath: null, // Set ke null
           fullName: _nameController.text.trim(),
           email: _emailController.text.trim(),
           gender: _selectedGender,
           education: _selectedEducation,
           skills: _selectedSkills,
+          cvPath: null,
           bio: _bioController.text.trim(),
           newPassword: _passwordController.text.isNotEmpty
               ? _passwordController.text
               : null,
         );
-        print('✅ Database updated');
       }
 
-      // Reset state
-      setState(() {
-        _cvFile = null;
-        _existingCvPath = null;
-      });
-
-      _showSnackBar('✓ CV berhasil dihapus', backgroundColor: Colors.green);
-      await _loadUserData();
+      if (mounted) {
+        setState(() {
+          _cvFile = null;
+          _existingCvPath = null;
+          _cvDeleted = true;
+          _isLoading = false;
+        });
+        _showSnackBar('CV berhasil dihapus', backgroundColor: Colors.green);
+      }
     } catch (e) {
-      print('Error deleting CV: $e');
-      _showSnackBar('Gagal menghapus CV: $e', backgroundColor: Colors.red);
-    } finally {
+      debugPrint('Error deleting CV: $e');
       if (mounted) {
         setState(() => _isLoading = false);
+        _showSnackBar('Gagal menghapus CV: $e', backgroundColor: Colors.red);
       }
     }
   }
@@ -270,10 +372,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           '${type}_${_username}_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final path = join(directory.path, fileName);
       await file.copy(path);
-      print('File saved to: $path');
+      debugPrint('File saved to: $path');
       return path;
     } catch (e) {
-      print('Error saving file: $e');
+      debugPrint('Error saving file: $e');
       return null;
     }
   }
@@ -283,20 +385,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _showSnackBar('Nama lengkap tidak boleh kosong');
       return;
     }
-
     if (_emailController.text.trim().isEmpty) {
       _showSnackBar('Email tidak boleh kosong');
       return;
     }
-
     if (!mounted) return;
+
     setState(() => _isLoading = true);
 
     try {
-      String? savedCvPath = _existingCvPath;
+      // Simpan foto profil jika ada yang baru
+      String? savedProfileImagePath = _existingProfileImagePath;
+      if (_profileImageFile != null &&
+          _profileImageFile!.path != _existingProfileImagePath &&
+          await _profileImageFile!.exists()) {
+        savedProfileImagePath =
+            await _saveProfileImageToLocal(_profileImageFile!);
+      }
 
-      if (_cvFile != null && _existingCvPath != _cvFile?.path) {
+      // Tentukan cvPath
+      String? savedCvPath;
+      if (_cvDeleted) {
+        savedCvPath = null;
+      } else if (_cvFile != null &&
+          _cvFile!.path != _existingCvPath &&
+          await _cvFile!.exists()) {
         savedCvPath = await _saveFileToLocal(_cvFile!, 'cv');
+      } else {
+        savedCvPath = _existingCvPath;
       }
 
       await _dbHelper.updateUserProfileFull(
@@ -308,26 +424,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
         skills: _selectedSkills,
         cvPath: savedCvPath,
         bio: _bioController.text.trim(),
+        profileImagePath: savedProfileImagePath,
         newPassword: _passwordController.text.isNotEmpty
             ? _passwordController.text
             : null,
       );
 
       if (mounted) {
-        _showSnackBar(
-          '✓ Profil berhasil diperbarui',
-          backgroundColor: Colors.green,
-        );
+        _showSnackBar('Profil berhasil diperbarui',
+            backgroundColor: Colors.green);
         await _loadUserData();
       }
     } catch (e) {
+      debugPrint('Error saving profile: $e');
       if (mounted) {
         _showSnackBar('Gagal menyimpan: $e', backgroundColor: Colors.red);
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -340,11 +454,75 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
+  Widget _buildAvatar() {
+    final hasImage = _profileImageFile != null || _existingProfileImagePath != null;
+    final imageFile = _profileImageFile ??
+        (_existingProfileImagePath != null
+            ? File(_existingProfileImagePath!)
+            : null);
+
+    return GestureDetector(
+      onTap: _pickProfileImage,
+      child: Stack(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: const BoxDecoration(shape: BoxShape.circle),
+            child: ClipOval(
+              child: hasImage && imageFile != null
+                  ? Image.file(
+                      imageFile,
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _defaultAvatar(),
+                    )
+                  : _defaultAvatar(),
+            ),
+          ),
+          // Badge kamera di pojok kanan bawah
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                color: const Color(0xFF6C63FF),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF0A0A0F), width: 2),
+              ),
+              child: const Icon(Icons.camera_alt_rounded,
+                  size: 16, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _defaultAvatar() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Icon(Icons.person_outline_rounded,
+          size: 50, color: Colors.white),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasCV =
-        _cvFile != null ||
-        (_existingCvPath != null && _existingCvPath!.isNotEmpty);
+    final hasCV = !_cvDeleted &&
+        (_cvFile != null ||
+            (_existingCvPath != null && _existingCvPath!.isNotEmpty));
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0F),
@@ -352,15 +530,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white70,
-          ),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.white70),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Edit Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style:
+              TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
@@ -374,44 +551,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 children: [
                   const SizedBox(height: 20),
 
-                  // Avatar
-                  GestureDetector(
-                    onTap: () {
-                      _showSnackBar(
-                        'Fitur foto profil segera hadir',
-                        backgroundColor: Colors.orange,
-                      );
-                    },
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.person_outline_rounded,
-                        size: 50,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  // Avatar dengan fitur ganti foto
+                  _buildAvatar(),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Tap untuk ganti foto',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
-                  ),
+                  const Text('Tap untuk ganti foto',
+                      style:
+                          TextStyle(color: Colors.white54, fontSize: 12)),
                   const SizedBox(height: 24),
 
                   // Nama Lengkap
                   TextField(
                     controller: _nameController,
                     style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration('Nama Lengkap', Icons.person),
+                    decoration:
+                        _inputDecoration('Nama Lengkap', Icons.person),
                   ),
                   const SizedBox(height: 16),
 
@@ -424,50 +577,41 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // PERBAIKAN: Dropdown Gender dengan HINT
+                  // Dropdown Gender
                   DropdownButtonFormField<String>(
                     value: _selectedGender,
-                    hint: const Text(
-                      'Pilih Jenis Kelamin',
-                      style: TextStyle(color: Colors.white54),
-                    ),
+                    hint: const Text('Pilih Jenis Kelamin',
+                        style: TextStyle(color: Colors.white54)),
                     dropdownColor: const Color(0xFF1A1A24),
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration(
-                      'Jenis Kelamin',
-                      Icons.person_outline,
-                    ),
-                    items: _genderOptions.map((gender) {
-                      return DropdownMenuItem(
-                        value: gender,
-                        child: Text(gender),
-                      );
-                    }).toList(),
-                    onChanged: (value) => mounted
-                        ? setState(() => _selectedGender = value)
-                        : null,
+                        'Jenis Kelamin', Icons.person_outline),
+                    items: _genderOptions
+                        .map((g) => DropdownMenuItem(
+                            value: g, child: Text(g)))
+                        .toList(),
+                    onChanged: (value) {
+                      if (mounted) setState(() => _selectedGender = value);
+                    },
                   ),
                   const SizedBox(height: 16),
 
-                  // PERBAIKAN: Dropdown Education dengan HINT
+                  // Dropdown Education
                   DropdownButtonFormField<String>(
                     value: _selectedEducation,
-                    hint: const Text(
-                      'Pilih Pendidikan Terakhir',
-                      style: TextStyle(color: Colors.white54),
-                    ),
+                    hint: const Text('Pilih Pendidikan Terakhir',
+                        style: TextStyle(color: Colors.white54)),
                     dropdownColor: const Color(0xFF1A1A24),
                     style: const TextStyle(color: Colors.white),
                     decoration: _inputDecoration(
-                      'Pendidikan Terakhir',
-                      Icons.school,
-                    ),
-                    items: _educationOptions.map((edu) {
-                      return DropdownMenuItem(value: edu, child: Text(edu));
-                    }).toList(),
-                    onChanged: (value) => mounted
-                        ? setState(() => _selectedEducation = value)
-                        : null,
+                        'Pendidikan Terakhir', Icons.school),
+                    items: _educationOptions
+                        .map((e) => DropdownMenuItem(
+                            value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (value) {
+                      if (mounted) setState(() => _selectedEducation = value);
+                    },
                   ),
                   const SizedBox(height: 16),
 
@@ -483,19 +627,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       children: [
                         const Row(
                           children: [
-                            Icon(
-                              Icons.code,
-                              color: Color(0xFF6C63FF),
-                              size: 20,
-                            ),
+                            Icon(Icons.code,
+                                color: Color(0xFF6C63FF), size: 20),
                             SizedBox(width: 8),
-                            Text(
-                              'Skill / Keahlian',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                            Text('Skill / Keahlian',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500)),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -503,29 +641,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           spacing: 8,
                           runSpacing: 8,
                           children: _allSkills.map((skill) {
-                            final isSelected = _selectedSkills.contains(skill);
+                            final isSelected =
+                                _selectedSkills.contains(skill);
                             return FilterChip(
-                              label: Text(
-                                skill,
-                                style: TextStyle(
-                                  color: isSelected
-                                      ? Colors.white
-                                      : Colors.white70,
-                                ),
-                              ),
+                              label: Text(skill,
+                                  style: TextStyle(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : Colors.white70)),
                               backgroundColor: const Color(0xFF2A2A3A),
                               selectedColor: const Color(0xFF6C63FF),
                               selected: isSelected,
                               onSelected: (selected) {
-                                if (mounted) {
-                                  setState(() {
-                                    if (selected) {
-                                      _selectedSkills.add(skill);
-                                    } else {
-                                      _selectedSkills.remove(skill);
-                                    }
-                                  });
-                                }
+                                if (!mounted) return;
+                                setState(() {
+                                  if (selected) {
+                                    _selectedSkills.add(skill);
+                                  } else {
+                                    _selectedSkills.remove(skill);
+                                  }
+                                });
                               },
                             );
                           }).toList(),
@@ -547,19 +682,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       children: [
                         const Row(
                           children: [
-                            Icon(
-                              Icons.picture_as_pdf,
-                              color: Color(0xFF6C63FF),
-                              size: 20,
-                            ),
+                            Icon(Icons.picture_as_pdf,
+                                color: Color(0xFF6C63FF), size: 20),
                             SizedBox(width: 8),
-                            Text(
-                              'Curriculum Vitae (CV)',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                            Text('Curriculum Vitae (CV)',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500)),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -572,9 +701,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               icon: const Icon(Icons.upload_file, size: 18),
                               label: const Text('Pilih File PDF'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(
-                                  0xFF6C63FF,
-                                ).withOpacity(0.2),
+                                backgroundColor: const Color(0xFF6C63FF)
+                                    .withOpacity(0.2),
                                 foregroundColor: const Color(0xFF6C63FF),
                               ),
                             ),
@@ -584,21 +712,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 icon: const Icon(Icons.visibility, size: 18),
                                 label: const Text('Lihat'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(
-                                    0xFF00D4AA,
-                                  ).withOpacity(0.2),
+                                  backgroundColor: const Color(0xFF00D4AA)
+                                      .withOpacity(0.2),
                                   foregroundColor: const Color(0xFF00D4AA),
                                 ),
                               ),
                               ElevatedButton.icon(
                                 onPressed: _deleteCV,
                                 icon: const Icon(
-                                  Icons.delete_outline_rounded,
-                                  size: 18,
-                                ),
+                                    Icons.delete_outline_rounded,
+                                    size: 18),
                                 label: const Text('Hapus'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red.withOpacity(0.2),
+                                  backgroundColor:
+                                      Colors.red.withOpacity(0.2),
                                   foregroundColor: Colors.red,
                                 ),
                               ),
@@ -611,9 +738,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             child: Text(
                               'CV terupload: ${_cvFile != null ? _cvFile!.path.split('/').last : (_existingCvPath?.split('/').last ?? 'CV.pdf')}',
                               style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 11,
-                              ),
+                                  color: Colors.white54, fontSize: 11),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -629,9 +754,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     style: const TextStyle(color: Colors.white),
                     maxLines: 4,
                     decoration: _inputDecoration(
-                      'Tentang Saya',
-                      Icons.description,
-                    ),
+                        'Tentang Saya', Icons.description),
                   ),
                   const SizedBox(height: 16),
 
@@ -641,9 +764,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     style: const TextStyle(color: Colors.white),
                     obscureText: true,
                     decoration: _inputDecoration(
-                      'Password Baru (opsional)',
-                      Icons.lock,
-                    ),
+                        'Password Baru (opsional)', Icons.lock),
                   ),
                   const SizedBox(height: 32),
 
@@ -662,9 +783,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: const Text(
                         'Simpan Perubahan',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                            fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
