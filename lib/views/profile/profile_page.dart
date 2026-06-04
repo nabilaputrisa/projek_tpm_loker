@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:projektpm/views/profile/feedback_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/database_helper.dart';
+import '../../core/theme/app_theme.dart';
 import 'edit_profile_page.dart';
 import 'applied_jobs_page.dart';
 
@@ -16,7 +17,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage>
     with TickerProviderStateMixin {
   late AnimationController _pulseController;
-  late AnimationController _rotateController;
   late AnimationController _floatController;
   late Animation<double> _pulseAnimation;
   late Animation<double> _floatAnimation;
@@ -35,11 +35,6 @@ class _ProfilePageState extends State<ProfilePage>
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
-
-    _rotateController = AnimationController(
-      duration: const Duration(seconds: 12),
-      vsync: this,
-    )..repeat();
 
     _floatController = AnimationController(
       duration: const Duration(milliseconds: 2500),
@@ -74,21 +69,20 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   void _showLogoutDialog() {
+    final cs = Theme.of(context).colorScheme;
+    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A24),
-        title: const Text('Konfirmasi Logout',
-            style: TextStyle(color: Colors.white)),
-        content: const Text('Apakah Anda yakin ingin keluar?',
-            style: TextStyle(color: Colors.white70)),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: cs.surface,
+        title: Text('Konfirmasi Logout', style: TextStyle(color: cs.onSurface)),
+        content: Text('Apakah Anda yakin ingin keluar?',
+            style: TextStyle(color: cs.onSurfaceVariant)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal',
-                style: TextStyle(color: Colors.white54)),
+            child: Text('Batal', style: TextStyle(color: cs.onSurfaceVariant)),
           ),
           TextButton(
             onPressed: () async {
@@ -97,8 +91,7 @@ class _ProfilePageState extends State<ProfilePage>
               if (!mounted) return;
               Navigator.pushReplacementNamed(context, '/login');
             },
-            child:
-                const Text('Logout', style: TextStyle(color: Colors.red)),
+            child: Text('Logout', style: TextStyle(color: cs.error)),
           ),
         ],
       ),
@@ -108,13 +101,13 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   void dispose() {
     _pulseController.dispose();
-    _rotateController.dispose();
     _floatController.dispose();
     super.dispose();
   }
 
   // Widget avatar — tampilkan foto jika ada, fallback ke gradient icon
   Widget _buildAvatar() {
+    final cs = Theme.of(context).colorScheme;
     final profileImagePath = _userProfile['profile_image'];
     final hasImage = profileImagePath != null &&
         profileImagePath.toString().isNotEmpty &&
@@ -149,16 +142,10 @@ class _ProfilePageState extends State<ProfilePage>
           height: 100,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: hasImage
-                ? null
-                : const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+            color: hasImage ? null : cs.primary, // Warna solid
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF6C63FF).withOpacity(0.4),
+                color: cs.primary.withOpacity(0.4),
                 blurRadius: 30,
                 spreadRadius: 4,
               ),
@@ -171,10 +158,10 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _defaultAvatarChild() {
-    return const Icon(
+    return Icon(
       Icons.person_outline_rounded,
       size: 48,
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.onPrimary,
     );
   }
 
@@ -194,6 +181,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final fullName = _userProfile['full_name']?.toString() ?? '';
     final email = _userProfile['email']?.toString() ?? '';
     final gender = _userProfile['gender']?.toString() ?? '';
@@ -206,19 +194,18 @@ class _ProfilePageState extends State<ProfilePage>
     final hasCV = cvPath.isNotEmpty && File(cvPath).existsSync();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: cs.surfaceContainerHighest,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white70),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: cs.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Profile',
           style: TextStyle(
-            color: Colors.white70,
+            color: cs.onSurface,
             fontSize: 16,
             fontWeight: FontWeight.w400,
             letterSpacing: 2,
@@ -227,8 +214,8 @@ class _ProfilePageState extends State<ProfilePage>
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+          ? Center(
+              child: CircularProgressIndicator(color: cs.primary),
             )
           : SingleChildScrollView(
               child: Column(
@@ -242,8 +229,8 @@ class _ProfilePageState extends State<ProfilePage>
                   // Username
                   Text(
                     _currentUsername ?? 'User',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: cs.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                     ),
@@ -255,7 +242,7 @@ class _ProfilePageState extends State<ProfilePage>
                     Text(
                       fullName,
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
+                          color: cs.onSurfaceVariant,
                           fontSize: 14),
                     ),
                   ],
@@ -266,7 +253,7 @@ class _ProfilePageState extends State<ProfilePage>
                     Text(
                       email,
                       style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
+                          color: cs.onSurfaceVariant.withOpacity(0.7),
                           fontSize: 13),
                     ),
                   ],
@@ -280,10 +267,9 @@ class _ProfilePageState extends State<ProfilePage>
                       alignment: WrapAlignment.center,
                       children: [
                         if (gender.isNotEmpty)
-                          _buildInfoChip(gender, const Color(0xFF6C63FF)),
+                          _buildInfoChip(gender, cs.primary),
                         if (education.isNotEmpty)
-                          _buildInfoChip(
-                              education, const Color(0xFF00D4AA)),
+                          _buildInfoChip(education, cs.secondary),
                       ],
                     ),
                   ],
@@ -299,7 +285,7 @@ class _ProfilePageState extends State<ProfilePage>
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
+                          color: cs.onSurfaceVariant.withOpacity(0.7),
                           fontSize: 13,
                           height: 1.5,
                         ),
@@ -318,7 +304,7 @@ class _ProfilePageState extends State<ProfilePage>
                         alignment: WrapAlignment.center,
                         children: skills
                             .map((s) => _buildInfoChip(
-                                s.trim(), Colors.orange))
+                                s.trim(), cs.secondary))
                             .toList(),
                       ),
                     ),
@@ -331,20 +317,19 @@ class _ProfilePageState extends State<ProfilePage>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.15),
+                        color: cs.primaryContainer,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: Colors.green.withOpacity(0.3)),
+                        border: Border.all(color: cs.primary.withOpacity(0.3)),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.picture_as_pdf,
-                              color: Colors.green, size: 14),
-                          SizedBox(width: 6),
+                              color: cs.primary, size: 14),
+                          const SizedBox(width: 6),
                           Text('CV Tersedia',
                               style: TextStyle(
-                                  color: Colors.green, fontSize: 12)),
+                                  color: cs.primary, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -356,8 +341,15 @@ class _ProfilePageState extends State<ProfilePage>
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A24),
+                      color: cs.surface,
                       borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: cs.shadow.withOpacity(0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
@@ -366,23 +358,23 @@ class _ProfilePageState extends State<ProfilePage>
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6C63FF).withOpacity(0.1),
+                              color: cs.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.person_outline,
-                                color: Color(0xFF6C63FF), size: 22),
+                            child: Icon(Icons.person_outline,
+                                color: cs.primary, size: 22),
                           ),
-                          title: const Text('Edit Profile',
+                          title: Text('Edit Profile',
                               style: TextStyle(
-                                  color: Colors.white, fontSize: 16)),
+                                  color: cs.onSurface, fontSize: 16)),
                           subtitle: Text(
                             'Ubah nama, email, dan password',
                             style: TextStyle(
-                                color: Colors.white.withOpacity(0.4),
+                                color: cs.onSurfaceVariant.withOpacity(0.6),
                                 fontSize: 12),
                           ),
-                          trailing: const Icon(Icons.chevron_right,
-                              color: Colors.white54),
+                          trailing: Icon(Icons.chevron_right,
+                              color: cs.onSurfaceVariant),
                           onTap: () {
                             Navigator.push(
                               context,
@@ -392,31 +384,30 @@ class _ProfilePageState extends State<ProfilePage>
                           },
                         ),
 
-                        const Divider(height: 1, color: Colors.white12),
+                        Divider(height: 1, color: cs.outlineVariant),
 
                         // Riwayat Lamaran
                         ListTile(
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color:
-                                  const Color(0xFF00D4AA).withOpacity(0.1),
+                              color: cs.secondary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.history,
-                                color: Color(0xFF00D4AA), size: 22),
+                            child: Icon(Icons.history,
+                                color: cs.secondary, size: 22),
                           ),
-                          title: const Text('Riwayat Lamaran',
+                          title: Text('Riwayat Lamaran',
                               style: TextStyle(
-                                  color: Colors.white, fontSize: 16)),
+                                  color: cs.onSurface, fontSize: 16)),
                           subtitle: Text(
                             'Lihat pekerjaan yang sudah dilamar',
                             style: TextStyle(
-                                color: Colors.white.withOpacity(0.4),
+                                color: cs.onSurfaceVariant.withOpacity(0.6),
                                 fontSize: 12),
                           ),
-                          trailing: const Icon(Icons.chevron_right,
-                              color: Colors.white54),
+                          trailing: Icon(Icons.chevron_right,
+                              color: cs.onSurfaceVariant),
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -424,31 +415,30 @@ class _ProfilePageState extends State<ProfilePage>
                           ),
                         ),
 
-                        const Divider(height: 1, color: Colors.white12),
+                        Divider(height: 1, color: cs.outlineVariant),
 
                         // Feedback
                         ListTile(
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color:
-                                  const Color(0xFF00D4AA).withOpacity(0.1),
+                              color: cs.secondary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.feedback_outlined,
-                                color: Color(0xFF00D4AA), size: 22),
+                            child: Icon(Icons.feedback_outlined,
+                                color: cs.secondary, size: 22),
                           ),
-                          title: const Text('Feedback TPM',
+                          title: Text('Feedback TPM',
                               style: TextStyle(
-                                  color: Colors.white, fontSize: 16)),
+                                  color: cs.onSurface, fontSize: 16)),
                           subtitle: Text(
                             'Beri masukan untuk mata kuliah TPM',
                             style: TextStyle(
-                                color: Colors.white.withOpacity(0.4),
+                                color: cs.onSurfaceVariant.withOpacity(0.6),
                                 fontSize: 12),
                           ),
-                          trailing: const Icon(Icons.chevron_right,
-                              color: Colors.white54),
+                          trailing: Icon(Icons.chevron_right,
+                              color: cs.onSurfaceVariant),
                           onTap: () => Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -456,30 +446,30 @@ class _ProfilePageState extends State<ProfilePage>
                           ),
                         ),
 
-                        const Divider(height: 1, color: Colors.white12),
+                        Divider(height: 1, color: cs.outlineVariant),
 
                         // Logout
                         ListTile(
                           leading: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
+                              color: cs.error.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(Icons.logout,
-                                color: Colors.red, size: 22),
+                            child: Icon(Icons.logout,
+                                color: cs.error, size: 22),
                           ),
-                          title: const Text('Logout',
+                          title: Text('Logout',
                               style: TextStyle(
-                                  color: Colors.red, fontSize: 16)),
+                                  color: cs.error, fontSize: 16)),
                           subtitle: Text(
                             'Keluar dari aplikasi',
                             style: TextStyle(
-                                color: Colors.red.withOpacity(0.5),
+                                color: cs.error.withOpacity(0.6),
                                 fontSize: 12),
                           ),
-                          trailing: const Icon(Icons.chevron_right,
-                              color: Colors.red),
+                          trailing: Icon(Icons.chevron_right,
+                              color: cs.error),
                           onTap: _showLogoutDialog,
                         ),
                       ],

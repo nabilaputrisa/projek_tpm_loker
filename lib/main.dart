@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'providers/job_provider.dart';
 import 'providers/interview_provider.dart';
 import 'data/services/notification_service.dart';
@@ -22,29 +25,24 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => JobProvider()),
         ChangeNotifierProvider(create: (_) => InterviewProvider()),
       ],
-      child: MaterialApp(
-        title: 'Career Portal',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF5E35B1),
-            primary: const Color(0xFF5E35B1),
-            secondary: const Color(0xFF7E57C2),
-          ),
-          useMaterial3: true,
-          appBarTheme: const AppBarTheme(
-            backgroundColor: Color(0xFF5E35B1),
-            foregroundColor: Colors.white,
-            elevation: 0,
-          ),
-        ),
-        home: const LoginPage(),
-        routes: {
-          '/login': (context) => const LoginPage(),
-          '/home': (context) => const MainNavigationPage(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'Career Portal',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
+            themeMode: themeProvider.themeMode,
+            home: const LoginPage(),
+            routes: {
+              '/login': (context) => const LoginPage(),
+              '/home': (context) => const MainNavigationPage(),
+            },
+          );
         },
       ),
     );

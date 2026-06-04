@@ -44,12 +44,14 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   }
 
   Widget _buildBottomNavBar() {
+    final cs = Theme.of(context).colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.purple.withOpacity(0.15),
+            color: cs.primary.withOpacity(0.15),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -122,7 +124,9 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final isActive = index == currentIndex;
+
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -130,9 +134,7 @@ class _NavItem extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive
-              ? const Color(0xFF5E35B1).withOpacity(0.1)
-              : Colors.transparent,
+          color: isActive ? cs.primary.withOpacity(0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -143,7 +145,7 @@ class _NavItem extends StatelessWidget {
               child: Icon(
                 isActive ? activeIcon : icon,
                 key: ValueKey(isActive),
-                color: isActive ? const Color(0xFF5E35B1) : Colors.grey[500],
+                color: isActive ? cs.primary : cs.onSurfaceVariant,
                 size: 24,
               ),
             ),
@@ -153,7 +155,7 @@ class _NavItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                color: isActive ? const Color(0xFF5E35B1) : Colors.grey[500],
+                color: isActive ? cs.primary : cs.onSurfaceVariant,
               ),
             ),
           ],
@@ -212,26 +214,21 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: cs.surfaceContainerHighest,
       appBar: AppBar(
         title: const Text(
           'Career Portal',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark, color: Colors.white),
+            icon: Icon(Icons.bookmark, color: cs.onPrimary),
             onPressed: () {
               Navigator.push(
                 context,
@@ -240,7 +237,7 @@ class _HomeTabState extends State<HomeTab> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
+            icon: Icon(Icons.person, color: cs.onPrimary),
             onPressed: () {
               Navigator.push(
                 context,
@@ -253,20 +250,7 @@ class _HomeTabState extends State<HomeTab> {
       body: Column(
         children: [
           Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.purple.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
+            color: cs.primary,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
             child: Column(
               children: [
@@ -275,28 +259,21 @@ class _HomeTabState extends State<HomeTab> {
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cs.surface,
                           borderRadius: BorderRadius.circular(30),
                         ),
                         child: TextField(
                           controller: _searchController,
                           decoration: InputDecoration(
                             hintText: 'Search jobs...',
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: Color(0xFF5E35B1),
-                            ),
+                            prefixIcon: Icon(Icons.search, color: cs.primary),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
                                     icon: const Icon(Icons.clear),
                                     onPressed: () {
                                       _searchController.clear();
-                                      context
-                                          .read<JobProvider>()
-                                          .setSearchQuery('');
-                                      context
-                                          .read<JobProvider>()
-                                          .fetchJobs(refresh: true);
+                                      context.read<JobProvider>().setSearchQuery('');
+                                      context.read<JobProvider>().fetchJobs(refresh: true);
                                     },
                                   )
                                 : null,
@@ -305,7 +282,7 @@ class _HomeTabState extends State<HomeTab> {
                               borderSide: BorderSide.none,
                             ),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: cs.surface,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 20,
                               vertical: 12,
@@ -321,11 +298,11 @@ class _HomeTabState extends State<HomeTab> {
                     const SizedBox(width: 12),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cs.surface,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.tune, color: Color(0xFF5E35B1)),
+                        icon: Icon(Icons.tune, color: cs.primary),
                         onPressed: _showFilterBottomSheet,
                         tooltip: 'Filter',
                       ),
@@ -335,15 +312,13 @@ class _HomeTabState extends State<HomeTab> {
                 const SizedBox(height: 10),
                 Consumer<JobProvider>(
                   builder: (context, provider, _) {
-                    final country =
-                        ApiJobService.countries[provider.selectedCountry];
+                    final country = ApiJobService.countries[provider.selectedCountry];
                     return SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
                           _FilterChip(
-                            label:
-                                '${country?.flag ?? ''} ${country?.name ?? provider.selectedCountry}',
+                            label: '${country?.flag ?? ''} ${country?.name ?? provider.selectedCountry}',
                             onRemove: null,
                           ),
                           if (provider.selectedLocation != 'Semua Lokasi')
@@ -392,32 +367,26 @@ class _HomeTabState extends State<HomeTab> {
             child: Consumer<JobProvider>(
               builder: (context, jobProvider, child) {
                 if (jobProvider.isLoading && jobProvider.jobs.isEmpty) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF5E35B1)),
+                  return Center(
+                    child: CircularProgressIndicator(color: cs.primary),
                   );
                 }
 
-                if (jobProvider.errorMessage != null &&
-                    jobProvider.jobs.isEmpty) {
+                if (jobProvider.errorMessage != null && jobProvider.jobs.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.error_outline,
-                            size: 64, color: Colors.grey[400]),
+                        Icon(Icons.error_outline, size: 64, color: cs.onSurfaceVariant),
                         const SizedBox(height: 16),
                         Text(
                           jobProvider.errorMessage!,
                           textAlign: TextAlign.center,
-                          style:
-                              TextStyle(color: Colors.grey[600], fontSize: 14),
+                          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () =>
-                              jobProvider.fetchJobs(refresh: true),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF5E35B1)),
+                          onPressed: () => jobProvider.fetchJobs(refresh: true),
                           child: const Text('Try Again'),
                         ),
                       ],
@@ -430,19 +399,16 @@ class _HomeTabState extends State<HomeTab> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off,
-                            size: 64, color: Colors.grey[400]),
+                        Icon(Icons.search_off, size: 64, color: cs.onSurfaceVariant),
                         const SizedBox(height: 16),
                         Text(
                           'No jobs found',
-                          style: TextStyle(
-                              color: Colors.grey[600], fontSize: 16),
+                          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 16),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Try changing keywords or filters',
-                          style: TextStyle(
-                              color: Colors.grey[500], fontSize: 14),
+                          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
                         ),
                       ],
                     ),
@@ -450,9 +416,8 @@ class _HomeTabState extends State<HomeTab> {
                 }
 
                 return RefreshIndicator(
-                  color: const Color(0xFF5E35B1),
-                  onRefresh: () async =>
-                      jobProvider.fetchJobs(refresh: true),
+                  color: cs.primary,
+                  onRefresh: () async => jobProvider.fetchJobs(refresh: true),
                   child: ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.only(top: 8, bottom: 16),
@@ -460,11 +425,10 @@ class _HomeTabState extends State<HomeTab> {
                     itemBuilder: (context, index) {
                       if (index == jobProvider.jobs.length) {
                         return jobProvider.isLoading
-                            ? const Padding(
-                                padding: EdgeInsets.all(16),
+                            ? Padding(
+                                padding: const EdgeInsets.all(16),
                                 child: Center(
-                                  child: CircularProgressIndicator(
-                                      color: Color(0xFF5E35B1)),
+                                  child: CircularProgressIndicator(color: cs.primary),
                                 ),
                               )
                             : const SizedBox(height: 16);

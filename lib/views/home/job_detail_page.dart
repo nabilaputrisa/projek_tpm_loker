@@ -11,6 +11,7 @@ import '../../widgets/map_preview_widget.dart';
 import '../../data/database/database_helper.dart';
 import '../profile/edit_profile_page.dart';
 
+
 class JobDetailPage extends StatelessWidget {
   final JobModel job;
 
@@ -18,8 +19,10 @@ class JobDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: cs.surfaceContainerHighest,
       body: CustomScrollView(
         slivers: [
           _buildSliverAppBar(context),
@@ -29,15 +32,15 @@ class JobDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildCompanyCard(),
+                  _buildCompanyCard(context),
                   const SizedBox(height: 16),
-                  _buildInfoGrid(),
+                  _buildInfoGrid(context),
                   const SizedBox(height: 16),
                   _buildSalaryCard(context),
                   const SizedBox(height: 16),
-                  _buildDescriptionCard(),
+                  _buildDescriptionCard(context),
                   const SizedBox(height: 16),
-                  _buildLocationCard(),
+                  _buildLocationCard(context),
                   SizedBox(
                       height: MediaQuery.of(context).padding.bottom + 100),
                 ],
@@ -53,20 +56,16 @@ class JobDetailPage extends StatelessWidget {
 
   // ── Sliver App Bar ─────────────────────────────────────────────────────────
   Widget _buildSliverAppBar(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
-      backgroundColor: const Color(0xFF1A3C5E),
-      iconTheme: const IconThemeData(color: Colors.white),
+      backgroundColor: cs.primary,
+      iconTheme: IconThemeData(color: cs.onPrimary),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF1A3C5E), Color(0xFF2D6A9F)],
-            ),
-          ),
+          color: cs.primary, // Warna solid, tanpa gradasi
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 20),
             child: Column(
@@ -75,10 +74,10 @@ class JobDetailPage extends StatelessWidget {
               children: [
                 Text(
                   job.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: cs.onPrimary,
                     height: 1.3,
                   ),
                   maxLines: 2,
@@ -86,14 +85,14 @@ class JobDetailPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Row(children: [
-                  const Icon(Icons.location_on,
-                      color: Color(0xFF7EC8F5), size: 16),
+                  Icon(Icons.location_on,
+                      color: cs.onPrimary.withOpacity(0.8), size: 16),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
                       job.location,
-                      style: const TextStyle(
-                          color: Color(0xFF7EC8F5), fontSize: 13),
+                      style: TextStyle(
+                          color: cs.onPrimary.withOpacity(0.8), fontSize: 13),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -107,17 +106,19 @@ class JobDetailPage extends StatelessWidget {
   }
 
   // ── Company Card ───────────────────────────────────────────────────────────
-  Widget _buildCompanyCard() {
+  Widget _buildCompanyCard(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return _Card(
       child: Row(children: [
         Container(
           width: 56, height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFFE8F1FB),
+            color: cs.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(Icons.business_rounded,
-              color: Color(0xFF2D6A9F), size: 28),
+          child: Icon(Icons.business_rounded,
+              color: cs.primary, size: 28),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -126,16 +127,16 @@ class JobDetailPage extends StatelessWidget {
             children: [
               Text(
                 job.company,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A3C5E)),
+                    color: cs.onSurface),
               ),
               const SizedBox(height: 4),
               if (job.category != null)
                 Text(job.category!,
-                    style: const TextStyle(
-                        fontSize: 13, color: Color(0xFF6B7A8D))),
+                    style: TextStyle(
+                        fontSize: 13, color: cs.onSurfaceVariant)),
             ],
           ),
         ),
@@ -144,14 +145,16 @@ class JobDetailPage extends StatelessWidget {
   }
 
   // ── Info Grid ──────────────────────────────────────────────────────────────
-  Widget _buildInfoGrid() {
+  Widget _buildInfoGrid(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Row(children: [
       Expanded(
         child: _InfoTile(
           icon: Icons.work_outline_rounded,
           label: "Tipe Kontrak",
           value: job.contractTypeDisplay,
-          color: const Color(0xFF2D6A9F),
+          color: cs.primary,
         ),
       ),
       const SizedBox(width: 12),
@@ -160,7 +163,7 @@ class JobDetailPage extends StatelessWidget {
           icon: Icons.schedule_rounded,
           label: "Diposting",
           value: job.timeAgo,
-          color: const Color(0xFF2D9F6A),
+          color: cs.secondary,
         ),
       ),
     ]);
@@ -168,33 +171,35 @@ class JobDetailPage extends StatelessWidget {
 
   // ── Salary Card ────────────────────────────────────────────────────────────
   Widget _buildSalaryCard(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return _Card(
       child: Column(children: [
         Row(children: [
           Container(
             width: 48, height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E0),
+              color: cs.secondaryContainer,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.payments_rounded,
-                color: Color(0xFFE67E22), size: 26),
+            child: Icon(Icons.payments_rounded,
+                color: cs.secondary, size: 26),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Estimasi Gaji",
+                Text("Estimasi Gaji",
                     style: TextStyle(
-                        fontSize: 12, color: Color(0xFF6B7A8D))),
+                        fontSize: 12, color: cs.onSurfaceVariant)),
                 const SizedBox(height: 4),
                 Text(
                   job.salaryDisplay,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A3C5E)),
+                      color: cs.onSurface),
                 ),
               ],
             ),
@@ -204,13 +209,13 @@ class JobDetailPage extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+                color: cs.primaryContainer,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: const Text("Per tahun",
+              child: Text("Per tahun",
                   style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF2D9F6A),
+                      color: cs.onPrimaryContainer,
                       fontWeight: FontWeight.w600)),
             ),
         ]),
@@ -221,7 +226,7 @@ class JobDetailPage extends StatelessWidget {
             child: _OutlineButton(
               icon: Icons.currency_exchange_rounded,
               label: "Konversi Mata Uang",
-              color: const Color(0xFF2D6A9F),
+              color: cs.primary,
               onTap: () => _showCurrencySheet(context),
             ),
           ),
@@ -230,7 +235,7 @@ class JobDetailPage extends StatelessWidget {
             child: _OutlineButton(
               icon: Icons.access_time_rounded,
               label: "Konversi Waktu",
-              color: const Color(0xFF7B3DD1),
+              color: cs.secondary,
               onTap: () => _showTimezoneSheet(context),
             ),
           ),
@@ -240,12 +245,14 @@ class JobDetailPage extends StatelessWidget {
   }
 
   // ── Description Card ───────────────────────────────────────────────────────
-  Widget _buildDescriptionCard() {
+  Widget _buildDescriptionCard(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return _Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _SectionHeader(title: "Deskripsi Pekerjaan"),
+          _SectionHeader(title: "Deskripsi Pekerjaan"),
           const SizedBox(height: 14),
           ReadMoreText(
             job.description,
@@ -253,17 +260,17 @@ class JobDetailPage extends StatelessWidget {
             trimMode: TrimMode.Line,
             trimCollapsedText: 'Lihat Selengkapnya',
             trimExpandedText: ' Sembunyikan',
-            moreStyle: const TextStyle(
+            moreStyle: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2D6A9F)),
-            lessStyle: const TextStyle(
+                color: cs.primary),
+            lessStyle: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2D6A9F)),
-            style: const TextStyle(
+                color: cs.primary),
+            style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF4A5568),
+                color: cs.onSurfaceVariant,
                 height: 1.7,
                 letterSpacing: 0.3),
           ),
@@ -273,7 +280,9 @@ class JobDetailPage extends StatelessWidget {
   }
 
   // ── Location Card ──────────────────────────────────────────────────────────
-  Widget _buildLocationCard() {
+  Widget _buildLocationCard(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return _Card(
       padding: EdgeInsets.zero,
       child: Column(
@@ -282,11 +291,11 @@ class JobDetailPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(children: [
-              const _SectionHeader(title: "Lokasi Kantor"),
+              _SectionHeader(title: "Lokasi Kantor"),
               const Spacer(),
               Text(job.location,
-                  style: const TextStyle(
-                      fontSize: 12, color: Color(0xFF6B7A8D)),
+                  style: TextStyle(
+                      fontSize: 12, color: cs.onSurfaceVariant),
                   overflow: TextOverflow.ellipsis),
             ]),
           ),
@@ -306,6 +315,8 @@ class JobDetailPage extends StatelessWidget {
 
   // ── Apply Button ───────────────────────────────────────────────────────────
   Widget _buildApplyButton(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return FutureBuilder<bool>(
       future: _hasApplied(),
       builder: (context, snapshot) {
@@ -315,15 +326,11 @@ class JobDetailPage extends StatelessWidget {
           width: MediaQuery.of(context).size.width * 0.9,
           height: 56,
           decoration: BoxDecoration(
-            gradient: hasApplied
-                ? LinearGradient(
-                    colors: [Colors.grey.shade600, Colors.grey.shade800])
-                : const LinearGradient(
-                    colors: [Color(0xFF1A3C5E), Color(0xFF2D6A9F)]),
+            color: hasApplied ? cs.onSurfaceVariant : cs.primary, // Warna solid
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: (hasApplied ? Colors.grey : const Color(0xFF1A3C5E))
+                color: (hasApplied ? cs.onSurfaceVariant : cs.primary)
                     .withOpacity(0.35),
                 blurRadius: 16,
                 offset: const Offset(0, 6),
@@ -341,7 +348,7 @@ class JobDetailPage extends StatelessWidget {
                 child: Text(
                   hasApplied ? "✓ SUDAH DILAMAR" : "LAMAR SEKARANG",
                   style: TextStyle(
-                      color: hasApplied ? Colors.white70 : Colors.white,
+                      color: hasApplied ? cs.onSurface : cs.onPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       letterSpacing: 1.2),
@@ -369,6 +376,8 @@ class JobDetailPage extends StatelessWidget {
   }
 
   Future<void> _applyForJob(BuildContext context) async {
+    final cs = Theme.of(context).colorScheme;
+    
     // Cek apakah user sudah login
     final prefs = await SharedPreferences.getInstance();
     final username = prefs.getString('logged_username');
@@ -429,10 +438,12 @@ class JobDetailPage extends StatelessWidget {
   }
 
   void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    final cs = Theme.of(context).colorScheme;
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
+        backgroundColor: isError ? cs.error : cs.primary,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -440,16 +451,18 @@ class JobDetailPage extends StatelessWidget {
   }
 
   void _showApplySuccessDialog(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Column(
-          children: const [
-            Icon(Icons.check_circle, color: Colors.green, size: 60),
-            SizedBox(height: 16),
-            Text('Lamaran Terkirim!'),
+          children: [
+            Icon(Icons.check_circle, color: cs.primary, size: 60),
+            const SizedBox(height: 16),
+            Text('Lamaran Terkirim!', style: TextStyle(color: cs.onSurface)),
           ],
         ),
         content: Column(
@@ -458,9 +471,8 @@ class JobDetailPage extends StatelessWidget {
             Text(
               'Lamaran untuk posisi "${job.title}" di ${job.company} telah berhasil dikirim.',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14),
+              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
             ),
-            
           ],
         ),
         actions: [
@@ -475,7 +487,7 @@ class JobDetailPage extends StatelessWidget {
                 ),
               );
             },
-            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: Text('OK', style: TextStyle(fontWeight: FontWeight.bold, color: cs.primary)),
           ),
         ],
       ),
@@ -483,22 +495,24 @@ class JobDetailPage extends StatelessWidget {
   }
 
   void _showApplyErrorDialog(BuildContext context, String title, String message) {
+    final cs = Theme.of(context).colorScheme;
+    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.orange, size: 28),
+            Icon(Icons.error_outline, color: cs.error, size: 28),
             const SizedBox(width: 12),
-            Text(title, style: const TextStyle(fontSize: 18)),
+            Text(title, style: TextStyle(fontSize: 18, color: cs.onSurface)),
           ],
         ),
-        content: Text(message),
+        content: Text(message, style: TextStyle(color: cs.onSurfaceVariant)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text('OK', style: TextStyle(color: cs.onSurfaceVariant)),
           ),
           TextButton(
             onPressed: () {
@@ -508,7 +522,7 @@ class JobDetailPage extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const EditProfilePage()),
               );
             },
-            child: const Text('Upload CV', style: TextStyle(color: Color(0xFF2D6A9F))),
+            child: Text('Upload CV', style: TextStyle(color: cs.primary)),
           ),
         ],
       ),
@@ -540,7 +554,7 @@ class JobDetailPage extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// REUSABLE WIDGETS (sama seperti sebelumnya)
+// REUSABLE WIDGETS
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _OutlineButton extends StatelessWidget {
@@ -597,15 +611,17 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Container(
       width: double.infinity,
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: cs.shadow.withOpacity(0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -631,14 +647,16 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: cs.shadow.withOpacity(0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -650,8 +668,8 @@ class _InfoTile extends StatelessWidget {
           Icon(icon, color: color, size: 22),
           const SizedBox(height: 8),
           Text(label,
-              style: const TextStyle(
-                  fontSize: 11, color: Color(0xFF6B7A8D))),
+              style: TextStyle(
+                  fontSize: 11, color: cs.onSurfaceVariant)),
           const SizedBox(height: 3),
           Text(
             value,
@@ -675,21 +693,23 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Row(children: [
       Container(
         width: 4, height: 20,
         decoration: BoxDecoration(
-          color: const Color(0xFF2D6A9F),
+          color: cs.primary,
           borderRadius: BorderRadius.circular(2),
         ),
       ),
       const SizedBox(width: 10),
       Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1A3C5E)),
+            color: cs.onSurface),
       ),
     ]);
   }

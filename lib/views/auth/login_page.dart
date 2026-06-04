@@ -4,7 +4,6 @@ import 'package:projektpm/views/auth/biometric_helper.dart';
 import 'package:projektpm/views/home/home_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/database_helper.dart';
-//import '../auth/biometric_helper.dart'; // Import BiometricHelper
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,9 +20,8 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _isRegisterMode = false; // Toggle antara Login dan Register
+  bool _isRegisterMode = false;
 
-  // Variabel untuk biometric
   bool _biometricSupported = false;
   bool _biometricEnabled = false;
   String? _biometricType;
@@ -42,10 +40,8 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  // Cek support biometric
   Future<void> _checkBiometricSupport() async {
     _biometricSupported = await BiometricHelper.isBiometricSupported();
-
     if (_biometricSupported) {
       final biometrics = await BiometricHelper.getAvailableBiometrics();
       if (biometrics.contains(BiometricType.fingerprint)) {
@@ -55,83 +51,58 @@ class _LoginPageState extends State<LoginPage> {
       } else if (biometrics.contains(BiometricType.iris)) {
         _biometricType = "Iris";
       }
-
-      if (mounted) {
-        setState(() {});
-      }
+      if (mounted) setState(() {});
     }
   }
 
-  // Load preferensi biometric dari SharedPreferences
   Future<void> _loadBiometricPreference() async {
     final prefs = await SharedPreferences.getInstance();
     _biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
-  // Simpan preferensi biometric
   Future<void> _saveBiometricPreference(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('biometric_enabled', enabled);
     _biometricEnabled = enabled;
-    if (mounted) {
-      setState(() {});
-    }
+    if (mounted) setState(() {});
   }
 
-  // Menampilkan pesan singkat
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
+    final cs = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red[700] : Colors.green[700],
+        backgroundColor: isError ? cs.error : const Color(0xFF2E7D32),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
       ),
     );
   }
 
-  // Validasi input
   String? _validateUsername(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Username tidak boleh kosong';
-    }
-    if (value.length < 3) {
-      return 'Username minimal 3 karakter';
-    }
+    if (value == null || value.isEmpty) return 'Username tidak boleh kosong';
+    if (value.length < 3) return 'Username minimal 3 karakter';
     return null;
   }
 
   String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password tidak boleh kosong';
-    }
-    if (value.length < 6) {
-      return 'Password minimal 6 karakter';
-    }
+    if (value == null || value.isEmpty) return 'Password tidak boleh kosong';
+    if (value.length < 6) return 'Password minimal 6 karakter';
     return null;
   }
 
-  // Logika Registrasi
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
     try {
       await _dbHelper.registerUser(
         _usernameController.text.trim(),
         _passwordController.text,
       );
-
       if (!mounted) return;
-
       _showSnackBar("✓ Registrasi Berhasil! Silakan Login.");
-
-      // Reset form dan switch ke mode login
       setState(() {
         _isRegisterMode = false;
         _passwordController.clear();
@@ -145,34 +116,23 @@ class _LoginPageState extends State<LoginPage> {
         isError: true,
       );
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // Login dengan biometric (tanpa password)
   Future<void> _loginWithBiometric() async {
     if (!_biometricSupported) {
       _showSnackBar("Perangkat tidak mendukung biometrik", isError: true);
       return;
     }
-
     setState(() => _isLoading = true);
-
     try {
-      // Autentikasi biometric
       final isAuthenticated = await BiometricHelper.authenticate();
-
       if (!mounted) return;
-
       if (isAuthenticated) {
-        // Coba ambil username terakhir yang login
         final prefs = await SharedPreferences.getInstance();
         final lastUsername = prefs.getString('last_username');
-
         if (lastUsername != null) {
-          // Login dengan username terakhir
           _usernameController.text = lastUsername;
           await _handleLoginWithBiometric(lastUsername);
         } else {
@@ -188,23 +148,16 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       _showSnackBar("Error biometrik: ${e.toString()}", isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // Handle login dengan biometric
   Future<void> _handleLoginWithBiometric(String username) async {
     try {
-      // Ambil data user dari database
       final userData = await _dbHelper.getUserByUsername(username);
-
       if (userData != null) {
-        // Simpan username ke SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('logged_username', username);
-
         _navigateToHome();
       } else {
         _showSnackBar("User tidak ditemukan", isError: true);
@@ -214,32 +167,19 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Logika Login Utama
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _isLoading = true);
-
     try {
       bool success = await _dbHelper.loginUser(
         _usernameController.text.trim(),
         _passwordController.text,
       );
-
       if (!mounted) return;
-
       if (success) {
-        // Simpan username ke SharedPreferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-          'logged_username',
-          _usernameController.text.trim(),
-        );
-
-        // Simpan username terakhir untuk biometric
+        await prefs.setString('logged_username', _usernameController.text.trim());
         await prefs.setString('last_username', _usernameController.text.trim());
-
-        // Cek apakah user ingin menggunakan biometric untuk login berikutnya
         if (_biometricSupported && _biometricEnabled == false) {
           await _showBiometricSetupDialog();
         } else {
@@ -252,15 +192,13 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       _showSnackBar("Error: ${e.toString()}", isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // Dialog setup biometric setelah login berhasil
   Future<void> _showBiometricSetupDialog() async {
     if (!mounted) return;
+    final cs = Theme.of(context).colorScheme;
 
     final shouldEnable = await showDialog<bool>(
       context: context,
@@ -275,17 +213,15 @@ class _LoginPageState extends State<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Kamu bisa login lebih cepat dengan biometrik untuk下一次.',
+              'Kamu bisa login lebih cepat dengan biometrik untuk lain kali.',
               style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Icon(
-                  _biometricType == "Sidik Jari"
-                      ? Icons.fingerprint
-                      : Icons.face,
-                  color: Colors.blue,
+                  _biometricType == "Sidik Jari" ? Icons.fingerprint : Icons.face,
+                  color: cs.primary,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -303,57 +239,42 @@ class _LoginPageState extends State<LoginPage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue[700]),
-            child: const Text('Aktifkan'),
+            style: ElevatedButton.styleFrom(backgroundColor: cs.primary),
+            child: Text('Aktifkan', style: TextStyle(color: cs.onPrimary)),
           ),
         ],
       ),
     );
 
     if (shouldEnable == true) {
-      // Verifikasi biometric sekali lagi untuk konfirmasi
       final isAuthenticated = await BiometricHelper.authenticate();
       if (isAuthenticated) {
         await _saveBiometricPreference(true);
         _showSnackBar("✓ Login biometrik berhasil diaktifkan", isError: false);
       } else {
-        _showSnackBar(
-          "Verifikasi gagal, biometrik tidak diaktifkan",
-          isError: true,
-        );
+        _showSnackBar("Verifikasi gagal, biometrik tidak diaktifkan", isError: true);
       }
     }
-
     _navigateToHome();
   }
 
-  // Dialog Verifikasi Biometric saat login
   Future<void> _showBiometricVerificationDialog() async {
     if (!_biometricSupported) {
       _showSnackBar("Perangkat tidak mendukung biometrik", isError: true);
       return;
     }
-
     setState(() => _isLoading = true);
-
     try {
       final isAuthenticated = await BiometricHelper.authenticate();
-
       if (!mounted) return;
-
       if (isAuthenticated) {
-        // Ambil username terakhir
         final prefs = await SharedPreferences.getInstance();
         final lastUsername = prefs.getString('last_username');
-
         if (lastUsername != null) {
           _usernameController.text = lastUsername;
           await _handleLoginWithBiometric(lastUsername);
         } else {
-          _showSnackBar(
-            "Silakan login dengan password terlebih dahulu",
-            isError: true,
-          );
+          _showSnackBar("Silakan login dengan password terlebih dahulu", isError: true);
         }
       } else {
         _showSnackBar("Verifikasi biometrik gagal", isError: true);
@@ -362,13 +283,10 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       _showSnackBar("Error biometrik: ${e.toString()}", isError: true);
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  // Navigasi ke Home
   void _navigateToHome() {
     Navigator.pushReplacement(
       context,
@@ -378,8 +296,10 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.blue[50],
+      backgroundColor: cs.surfaceContainerHighest,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -394,7 +314,7 @@ class _LoginPageState extends State<LoginPage> {
                     height: 120,
                     width: 120,
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade700,
+                      color: cs.primary,
                       shape: BoxShape.circle,
                       boxShadow: const [
                         BoxShadow(
@@ -404,10 +324,10 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.work_outline_rounded,
                       size: 60,
-                      color: Colors.white,
+                      color: cs.onPrimary,
                     ),
                   ),
                   const SizedBox(height: 30),
@@ -418,7 +338,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue[900],
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -426,11 +346,10 @@ class _LoginPageState extends State<LoginPage> {
                     _isRegisterMode
                         ? "Daftar untuk memulai"
                         : "Temukan karir impianmu",
-                    style: TextStyle(fontSize: 14, color: Colors.blue[700]),
+                    style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                   ),
                   const SizedBox(height: 40),
 
-                  // Form hanya ditampilkan jika tidak menggunakan biometric
                   if (!_isRegisterMode && _biometricEnabled) ...[
                     // Tombol Login dengan Biometric
                     SizedBox(
@@ -442,9 +361,7 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: InkWell(
-                          onTap: _isLoading
-                              ? null
-                              : _showBiometricVerificationDialog,
+                          onTap: _isLoading ? null : _showBiometricVerificationDialog,
                           borderRadius: BorderRadius.circular(20),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -454,7 +371,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ? Icons.fingerprint
                                     : Icons.face,
                                 size: 50,
-                                color: Colors.blue[700],
+                                color: cs.primary,
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -462,7 +379,7 @@ class _LoginPageState extends State<LoginPage> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.blue[700],
+                                  color: cs.primary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -470,7 +387,7 @@ class _LoginPageState extends State<LoginPage> {
                                 'Tekan untuk verifikasi',
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[600],
+                                  color: cs.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -483,46 +400,44 @@ class _LoginPageState extends State<LoginPage> {
                     // Divider
                     Row(
                       children: [
-                        Expanded(child: Divider(color: Colors.grey[400])),
+                        Expanded(child: Divider(color: cs.outlineVariant)),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             'atau login dengan password',
                             style: TextStyle(
-                              color: Colors.grey[600],
+                              color: cs.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
                         ),
-                        Expanded(child: Divider(color: Colors.grey[400])),
+                        Expanded(child: Divider(color: cs.outlineVariant)),
                       ],
                     ),
                     const SizedBox(height: 16),
                   ],
 
-                  // Input Username (sembunyikan jika biometric enabled)
                   if (!_isRegisterMode && _biometricEnabled) ...[
-                    // Jika biometric enabled, tampilkan username yang tersimpan
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cs.surface,
                         borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.blue.shade100),
+                        border: Border.all(color: cs.outlineVariant),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.person, color: Colors.blue[700]),
+                          Icon(Icons.person, color: cs.primary),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Username',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey,
+                                    color: cs.onSurfaceVariant,
                                   ),
                                 ),
                                 FutureBuilder<String?>(
@@ -531,7 +446,10 @@ class _LoginPageState extends State<LoginPage> {
                                     final username = snapshot.data ?? '';
                                     return Text(
                                       username,
-                                      style: const TextStyle(fontSize: 16),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: cs.onSurface,
+                                      ),
                                     );
                                   },
                                 ),
@@ -539,7 +457,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, size: 20),
+                            icon: Icon(Icons.close, size: 20, color: cs.onSurfaceVariant),
                             onPressed: () async {
                               await _saveBiometricPreference(false);
                               setState(() {});
@@ -551,81 +469,69 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 16),
                   ] else ...[
-                    // Tampilkan form login biasa
+                    // Form username
                     TextFormField(
                       controller: _usernameController,
                       validator: _validateUsername,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.person, color: Colors.blue[700]),
+                        prefixIcon: Icon(Icons.person, color: cs.primary),
                         labelText: "Username",
                         hintText: "Masukkan username",
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: cs.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: Colors.blue.shade100),
+                          borderSide: BorderSide(color: cs.outlineVariant),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(
-                            color: Colors.blue.shade700,
-                            width: 2,
-                          ),
+                          borderSide: BorderSide(color: cs.primary, width: 2),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: const BorderSide(color: Colors.red),
+                          borderSide: BorderSide(color: cs.error),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    // Input Password
+                    // Form password
                     TextFormField(
                       controller: _passwordController,
                       validator: _validatePassword,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.lock, color: Colors.blue[700]),
+                        prefixIcon: Icon(Icons.lock, color: cs.primary),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                            color: Colors.blue[700],
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                            color: cs.primary,
                           ),
-                          onPressed: () {
-                            setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            );
-                          },
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
                         labelText: "Password",
                         hintText: "Masukkan password",
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: cs.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(color: Colors.blue.shade100),
+                          borderSide: BorderSide(color: cs.outlineVariant),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(
-                            color: Colors.blue.shade700,
-                            width: 2,
-                          ),
+                          borderSide: BorderSide(color: cs.primary, width: 2),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
-                          borderSide: const BorderSide(color: Colors.red),
+                          borderSide: BorderSide(color: cs.error),
                         ),
                       ),
                     ),
@@ -634,39 +540,36 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 30),
 
                   // Tombol Login/Register
-                  if (!(_isRegisterMode == false &&
-                      _biometricEnabled == true)) ...[
+                  if (!(_isRegisterMode == false && _biometricEnabled == true)) ...[
                     SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
                         onPressed: _isLoading
                             ? null
-                            : (_isRegisterMode
-                                  ? _handleRegister
-                                  : _handleLogin),
+                            : (_isRegisterMode ? _handleRegister : _handleLogin),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue[700],
-                          disabledBackgroundColor: Colors.blue[300],
+                          backgroundColor: cs.primary,
+                          disabledBackgroundColor: cs.primary.withOpacity(0.5),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
                           elevation: 3,
                         ),
                         child: _isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: cs.onPrimary,
                                   strokeWidth: 2,
                                 ),
                               )
                             : Text(
                                 _isRegisterMode ? "DAFTAR" : "LOGIN",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
-                                  color: Colors.white,
+                                  color: cs.onPrimary,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1,
                                 ),
@@ -677,21 +580,17 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 16),
 
-                  // Tombol Biometric (jika support dan tidak dalam mode biometric)
-                  if (!_isRegisterMode &&
-                      _biometricSupported &&
-                      !_biometricEnabled) ...[
+                  // Tombol Biometric
+                  if (!_isRegisterMode && _biometricSupported && !_biometricEnabled) ...[
                     TextButton.icon(
                       onPressed: _loginWithBiometric,
                       icon: Icon(
-                        _biometricType == "Sidik Jari"
-                            ? Icons.fingerprint
-                            : Icons.face,
-                        color: Colors.blue[700],
+                        _biometricType == "Sidik Jari" ? Icons.fingerprint : Icons.face,
+                        color: cs.primary,
                       ),
                       label: Text(
                         'Login dengan ${_biometricType ?? "Biometrik"}',
-                        style: TextStyle(color: Colors.blue[700]),
+                        style: TextStyle(color: cs.primary),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -702,10 +601,8 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _isRegisterMode
-                            ? "Sudah punya akun? "
-                            : "Belum punya akun? ",
-                        style: TextStyle(color: Colors.grey[700]),
+                        _isRegisterMode ? "Sudah punya akun? " : "Belum punya akun? ",
+                        style: TextStyle(color: cs.onSurfaceVariant),
                       ),
                       TextButton(
                         onPressed: _isLoading
@@ -719,7 +616,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Text(
                           _isRegisterMode ? "Login di sini" : "Daftar di sini",
                           style: TextStyle(
-                            color: Colors.blue[800],
+                            color: cs.primary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -735,7 +632,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Helper untuk mendapatkan username terakhir
   Future<String?> _getLastUsername() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('last_username');

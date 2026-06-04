@@ -20,15 +20,15 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
 
   void _removeJob(BuildContext context, JobModel job) {
     context.read<JobProvider>().toggleWishlist(job);
+    final cs = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${job.title} dihapus dari wishlist'),
         duration: const Duration(seconds: 2),
         action: SnackBarAction(
           label: 'Batal',
-          textColor: const Color(0xFF7E57C2),
+          textColor: cs.primary,
           onPressed: () {
-            // Tambah lagi jika dibatalkan
             context.read<JobProvider>().toggleWishlist(job);
           },
         ),
@@ -37,33 +37,37 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
   }
 
   Future<void> _confirmClearAll(BuildContext context) async {
+    final cs = Theme.of(context).colorScheme;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: cs.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        title: Text(
           'Hapus Semua?',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, color: cs.onSurface),
         ),
-        content: const Text(
+        content: Text(
           'Semua lowongan tersimpan akan dihapus dari wishlist. Tindakan ini tidak dapat dibatalkan.',
+          style: TextStyle(color: cs.onSurfaceVariant),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
+            child: Text('Batal',
+                style: TextStyle(color: cs.onSurfaceVariant)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: cs.error,
+              foregroundColor: cs.onError,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text(
-              'Hapus Semua',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('Hapus Semua'),
           ),
         ],
       ),
@@ -79,34 +83,28 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text(
+        backgroundColor: cs.surface,
+        elevation: 0,
+        title: Text(
           'Lowongan Tersimpan',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, color: cs.onSurface),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios_new, color: cs.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        elevation: 0,
         actions: [
           Consumer<JobProvider>(
             builder: (context, provider, _) {
               if (provider.wishlist.isEmpty) return const SizedBox();
               return IconButton(
-                icon: const Icon(Icons.delete_sweep_outlined,
-                    color: Colors.white),
+                icon: Icon(Icons.delete_sweep_outlined, color: cs.onSurface),
                 tooltip: 'Hapus Semua',
                 onPressed: () => _confirmClearAll(context),
               );
@@ -118,8 +116,8 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
         builder: (context, provider, _) {
           // ── Loading ─────────────────────────────────────────────
           if (provider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF5E35B1)),
+            return Center(
+              child: CircularProgressIndicator(color: cs.primary),
             );
           }
 
@@ -132,22 +130,22 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF5E35B1).withOpacity(0.08),
+                      color: cs.primary.withOpacity(0.08),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.bookmark_outline,
                       size: 64,
-                      color: Color(0xFF5E35B1),
+                      color: cs.primary,
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Belum ada lowongan tersimpan',
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
+                      color: cs.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -156,7 +154,7 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[500],
+                      color: cs.onSurfaceVariant,
                       height: 1.5,
                     ),
                   ),
@@ -166,8 +164,9 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
                     icon: const Icon(Icons.search),
                     label: const Text('Cari Lowongan'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5E35B1),
-                      foregroundColor: Colors.white,
+                      backgroundColor: cs.primary,
+                      foregroundColor: cs.onPrimary,
+                      elevation: 0,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -188,20 +187,16 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.purple.withOpacity(0.07),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: cs.surface,
+                  border: Border(
+                    bottom: BorderSide(color: cs.outlineVariant),
+                  ),
                 ),
                 child: Text(
                   '${provider.wishlist.length} lowongan tersimpan',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: Color(0xFF5E35B1),
+                    color: cs.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -215,7 +210,6 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
                   itemBuilder: (context, index) {
                     final job = provider.wishlist[index];
 
-                    // Swipe ke kiri untuk hapus
                     return Dismissible(
                       key: ValueKey(job.id),
                       direction: DismissDirection.endToStart,
@@ -223,21 +217,21 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
                         margin: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.red[400],
+                          color: cs.error,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
-                        child: const Column(
+                        child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.delete_outline,
-                                color: Colors.white, size: 28),
-                            SizedBox(height: 4),
+                                color: cs.onError, size: 28),
+                            const SizedBox(height: 4),
                             Text(
                               'Hapus',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: cs.onError,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),

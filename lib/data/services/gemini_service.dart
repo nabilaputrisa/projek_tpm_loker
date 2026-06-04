@@ -285,7 +285,6 @@ Panduan:
       '💡 Skill untuk Software Engineer',
       '💰 Cara negosiasi gaji',
         '🚀 Rekomendasi karir untuk fresh graduate',
-        '🎯 Tips interview kerja',
     ];
   }
 }

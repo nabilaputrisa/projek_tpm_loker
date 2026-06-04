@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../providers/job_provider.dart'; // ✅ Membuka class SalaryRange bawaan job_provider
-import '../../data/services/api_job_service.dart'; // ✅ Sembunyikan class duplikat dari api_job_service
+import '../../providers/job_provider.dart';
+import '../../data/services/api_job_service.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({super.key});
@@ -86,25 +86,19 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     }
 
     setState(() {
-      _selectedSalaryRange = SalaryRange(
-        min: min,
-        max: max,
-        label: label,
-      );
+      _selectedSalaryRange = SalaryRange(min: min, max: max, label: label);
     });
   }
 
   String _formatNumber(int number) {
-    if (number >= 1000000) {
-      return '${(number / 1000000).toStringAsFixed(1)}M';
-    } else if (number >= 1000) {
-      return '${(number / 1000).toStringAsFixed(0)}K';
-    }
+    if (number >= 1000000) return '${(number / 1000000).toStringAsFixed(1)}M';
+    if (number >= 1000) return '${(number / 1000).toStringAsFixed(0)}K';
     return number.toString();
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final countries = _apiService.getAvailableCountries();
     final locations = _apiService.getLocations(_selectedCountry);
     final country = ApiJobService.countries[_selectedCountry];
@@ -126,9 +120,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     ];
 
     return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-      ),
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -138,12 +130,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             children: [
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'Filter Jobs',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A237E),
+                      color: cs.onSurface,
                     ),
                   ),
                   const Spacer(),
@@ -228,9 +220,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     child: TextField(
                       controller: _minSalaryController,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
                         labelText: 'Min Salary',
                         hintText: 'Any',
@@ -245,17 +235,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8),
-                    child: Text('-'),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text('-', style: TextStyle(color: cs.onSurface)),
                   ),
                   Expanded(
                     child: TextField(
                       controller: _maxSalaryController,
                       keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
                         labelText: 'Max Salary',
                         hintText: 'Any',
@@ -294,8 +282,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF5E35B1),
-                        side: const BorderSide(color: Color(0xFF5E35B1)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -309,7 +295,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     child: ElevatedButton(
                       onPressed: () {
                         _createSalaryRangeFromInputs();
-
                         final provider = context.read<JobProvider>();
                         provider.setCountry(_selectedCountry);
                         provider.setLocation(_selectedLocation);
@@ -320,7 +305,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF5E35B1),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -328,11 +312,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       ),
                       child: const Text(
                         'Apply Filters',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),

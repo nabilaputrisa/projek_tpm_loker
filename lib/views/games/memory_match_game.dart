@@ -1,24 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-void main() {
-  runApp(const MemoryMatchGame());
-}
-
 class MemoryMatchGame extends StatelessWidget {
   const MemoryMatchGame({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Game Kartu Daya Ingat',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: const Color(0xFFE3F2FD),
-      ),
-      home: const GameScreen(),
-      debugShowCheckedModeBanner: false,
-    );
+    return const GameScreen();
   }
 }
 
@@ -95,16 +83,14 @@ class _GameScreenState extends State<GameScreen> {
     gameStarted = false;
     isChecking = false;
     previewTimeLeft = 10;
-    
+
     previewTimer?.cancel();
     countdownTimer?.cancel();
 
-    // Pilih 8 profesi secara acak untuk 4x4 grid (16 kartu = 8 pasang)
     final selectedProfessions = List<Map<String, String>>.from(professions);
     selectedProfessions.shuffle();
-    
+
     int cardId = 0;
-    // Buat 8 pasang kartu
     for (int i = 0; i < 8; i++) {
       cards.add(CardItem(
         emoji: selectedProfessions[i]['emoji']!,
@@ -119,7 +105,6 @@ class _GameScreenState extends State<GameScreen> {
     }
 
     cards.shuffle();
-
     setState(() {});
   }
 
@@ -130,12 +115,10 @@ class _GameScreenState extends State<GameScreen> {
       previewTimeLeft = 10;
     });
 
-    // Buka semua kartu untuk preview
     for (var card in cards) {
       card.isFlipped = true;
     }
 
-    // Countdown timer yang bergerak
     countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         previewTimeLeft--;
@@ -143,7 +126,6 @@ class _GameScreenState extends State<GameScreen> {
 
       if (previewTimeLeft == 0) {
         timer.cancel();
-        // Tutup semua kartu setelah preview selesai
         setState(() {
           showingPreview = false;
           for (var card in cards) {
@@ -175,7 +157,6 @@ class _GameScreenState extends State<GameScreen> {
     final second = cards[selectedCards[1]];
 
     if (first.profession == second.profession) {
-      // Cocok!
       setState(() {
         first.isMatched = true;
         second.isMatched = true;
@@ -185,14 +166,12 @@ class _GameScreenState extends State<GameScreen> {
       selectedCards.clear();
       isChecking = false;
 
-      // Cek apakah menang (8 pasang untuk grid 4x4)
       if (matchedPairs == 8) {
         Future.delayed(const Duration(milliseconds: 500), () {
           showWinDialog();
         });
       }
     } else {
-      // Tidak cocok
       Future.delayed(const Duration(milliseconds: 1000), () {
         setState(() {
           cards[selectedCards[0]].isFlipped = false;
@@ -210,23 +189,24 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void showWinDialog() {
+    final cs = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.blue[50],
-        title: const Text(
+        backgroundColor: cs.primaryContainer,
+        title: Text(
           '🎉 SELAMAT! 🎉',
           style: TextStyle(
-            color: Colors.blue,
+            color: cs.onPrimaryContainer,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
         ),
-        content: const Text(
+        content: Text(
           'Anda berhasil mencocokkan semua kartu!',
-          style: TextStyle(fontSize: 18),
+          style: TextStyle(fontSize: 18, color: cs.onPrimaryContainer),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -246,15 +226,16 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void showGameOverDialog() {
+    final cs = Theme.of(context).colorScheme;
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.red[50],
-        title: const Text(
+        backgroundColor: cs.errorContainer,
+        title: Text(
           '💔 GAME OVER 💔',
           style: TextStyle(
-            color: Colors.red,
+            color: cs.onErrorContainer,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -262,7 +243,7 @@ class _GameScreenState extends State<GameScreen> {
         ),
         content: Text(
           'Kesempatan habis!\nKartu yang berhasil: $matchedPairs/8 pasang',
-          style: const TextStyle(fontSize: 18),
+          style: TextStyle(fontSize: 18, color: cs.onErrorContainer),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -283,13 +264,16 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Game Kartu Daya Ingat',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.blue[700],
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
         elevation: 0,
       ),
       body: Column(
@@ -297,17 +281,16 @@ class _GameScreenState extends State<GameScreen> {
           // Status Bar
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.blue[700],
+            color: cs.primary,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                // Lives
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'Nyawa: ',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: cs.onPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -316,23 +299,22 @@ class _GameScreenState extends State<GameScreen> {
                       3,
                       (index) => Icon(
                         index < lives ? Icons.favorite : Icons.favorite_border,
-                        color: Colors.red,
+                        color: cs.error,
                         size: 30,
                       ),
                     ),
                   ],
                 ),
-                // Matched Pairs
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cs.surface,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     'Pasangan: $matchedPairs/8',
                     style: TextStyle(
-                      color: Colors.blue[700],
+                      color: cs.primary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -342,24 +324,24 @@ class _GameScreenState extends State<GameScreen> {
             ),
           ),
 
-          // Preview Timer dengan countdown
+          // Preview Timer
           if (showingPreview)
             Container(
               padding: const EdgeInsets.all(16),
-              color: Colors.orange[100],
+              color: cs.secondaryContainer,
               child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.remove_red_eye, color: Colors.orange, size: 28),
-                      SizedBox(width: 8),
+                    children: [
+                      Icon(Icons.remove_red_eye, color: cs.onSecondaryContainer, size: 28),
+                      const SizedBox(width: 8),
                       Text(
                         'Ingat posisi kartu!',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.orange,
+                          color: cs.onSecondaryContainer,
                         ),
                       ),
                     ],
@@ -368,15 +350,15 @@ class _GameScreenState extends State<GameScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.orange,
+                      color: cs.secondary,
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Text(
                       '$previewTimeLeft detik',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: cs.onSecondary,
                       ),
                     ),
                   ),
@@ -394,26 +376,26 @@ class _GameScreenState extends State<GameScreen> {
                         Icon(
                           Icons.psychology,
                           size: 100,
-                          color: Colors.blue[300],
+                          color: cs.primary,
                         ),
                         const SizedBox(height: 24),
-                        const Text(
+                        Text(
                           'Game Kartu Daya Ingat',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+                            color: cs.primary,
                           ),
                         ),
                         const SizedBox(height: 12),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 32),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
                           child: Text(
                             'Cocokkan semua pasangan kartu profesi!\nKamu punya 3 nyawa.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.black54,
+                              color: cs.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -421,7 +403,8 @@ class _GameScreenState extends State<GameScreen> {
                         ElevatedButton(
                           onPressed: startGame,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
+                            backgroundColor: cs.tertiary ?? cs.secondary,
+                            foregroundColor: cs.onTertiary ?? cs.onSecondary,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 48,
                               vertical: 20,
@@ -431,9 +414,9 @@ class _GameScreenState extends State<GameScreen> {
                             ),
                             elevation: 5,
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: const [
+                            children: [
                               Icon(Icons.play_arrow, size: 32),
                               SizedBox(width: 8),
                               Text(
@@ -466,9 +449,11 @@ class _GameScreenState extends State<GameScreen> {
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 300),
                                 decoration: BoxDecoration(
-                                  color: cards[index].isFlipped || cards[index].isMatched
-                                      ? Colors.white
-                                      : Colors.blue[600],
+                                  color: cards[index].isMatched
+                                      ? cs.primaryContainer
+                                      : cards[index].isFlipped
+                                          ? cs.surface
+                                          : cs.primary,
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(
@@ -492,7 +477,7 @@ class _GameScreenState extends State<GameScreen> {
                                       : Icon(
                                           Icons.help_outline,
                                           size: 40,
-                                          color: Colors.blue[200],
+                                          color: cs.onPrimary.withOpacity(0.6),
                                         ),
                                 ),
                               ),
@@ -515,7 +500,8 @@ class _GameScreenState extends State<GameScreen> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[700],
+                backgroundColor: cs.primary,
+                foregroundColor: cs.onPrimary,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/database_helper.dart';
+
 import 'applied_job_detail_page.dart';
 
 class AppliedJobsPage extends StatefulWidget {
@@ -63,46 +64,65 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
     }
   }
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(String status, ColorScheme cs) {
     switch (status) {
       case 'Applied':
-        return const Color(0xFF00D4AA);
+        return cs.secondary;
       case 'Reviewed':
         return Colors.orange;
       case 'Interview':
-        return const Color(0xFF6C63FF);
+        return cs.primary;
       case 'Accepted':
         return Colors.green;
       case 'Rejected':
-        return Colors.red;
+        return cs.error;
       default:
-        return Colors.grey;
+        return cs.onSurfaceVariant;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'Applied':
+        return Icons.send;
+      case 'Reviewed':
+        return Icons.visibility;
+      case 'Interview':
+        return Icons.people;
+      case 'Accepted':
+        return Icons.celebration;
+      case 'Rejected':
+        return Icons.cancel;
+      default:
+        return Icons.work;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: cs.surfaceContainerHighest,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.white70,
+            color: cs.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Riwayat Lamaran',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+          ? Center(
+              child: CircularProgressIndicator(color: cs.primary),
             )
           : _appliedJobs.isEmpty
               ? Center(
@@ -112,31 +132,31 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
                       Icon(
                         Icons.work_off_outlined,
                         size: 64,
-                        color: Colors.white.withOpacity(0.3),
+                        color: cs.onSurfaceVariant.withOpacity(0.5),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Belum ada lamaran pekerjaan',
-                        style: TextStyle(color: Colors.white.withOpacity(0.5)),
+                        style: TextStyle(color: cs.onSurfaceVariant),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Yuk cari pekerjaan impianmu!',
-                        style: TextStyle(color: Colors.white.withOpacity(0.3)),
+                        style: TextStyle(color: cs.onSurfaceVariant.withOpacity(0.7)),
                       ),
                     ],
                   ),
                 )
               : RefreshIndicator(
                   onRefresh: _loadAppliedJobs,
-                  color: const Color(0xFF6C63FF),
+                  color: cs.primary,
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: _appliedJobs.length,
                     itemBuilder: (context, index) {
                       final job = _appliedJobs[index];
                       final status = job['status'] ?? 'Applied';
-                      final statusColor = _getStatusColor(status);
+                      final statusColor = _getStatusColor(status, cs);
                       
                       return GestureDetector(
                         onTap: () {
@@ -153,11 +173,18 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
                           margin: const EdgeInsets.only(bottom: 12),
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A24),
+                            color: cs.surface,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
                               color: statusColor.withOpacity(0.2),
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: cs.shadow.withOpacity(0.06),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,8 +211,8 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
                                       children: [
                                         Text(
                                           job['job_title'] ?? 'Unknown Job',
-                                          style: const TextStyle(
-                                            color: Colors.white,
+                                          style: TextStyle(
+                                            color: cs.onSurface,
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -196,7 +223,7 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
                                         Text(
                                           job['company'] ?? 'Unknown Company',
                                           style: TextStyle(
-                                            color: Colors.white.withOpacity(0.6),
+                                            color: cs.onSurfaceVariant,
                                             fontSize: 13,
                                           ),
                                           maxLines: 1,
@@ -207,24 +234,24 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
                                           children: [
                                             Icon(Icons.calendar_today,
                                                 size: 10,
-                                                color: Colors.white.withOpacity(0.4)),
+                                                color: cs.onSurfaceVariant.withOpacity(0.6)),
                                             const SizedBox(width: 4),
                                             Text(
                                               _formatDate(job['applied_date'] ?? ''),
                                               style: TextStyle(
-                                                color: Colors.white.withOpacity(0.4),
+                                                color: cs.onSurfaceVariant.withOpacity(0.6),
                                                 fontSize: 11,
                                               ),
                                             ),
                                             const SizedBox(width: 8),
                                             Icon(Icons.access_time,
                                                 size: 10,
-                                                color: Colors.white.withOpacity(0.4)),
+                                                color: cs.onSurfaceVariant.withOpacity(0.6)),
                                             const SizedBox(width: 4),
                                             Text(
                                               _formatTime(job['applied_date'] ?? ''),
                                               style: TextStyle(
-                                                color: Colors.white.withOpacity(0.4),
+                                                color: cs.onSurfaceVariant.withOpacity(0.6),
                                                 fontSize: 11,
                                               ),
                                             ),
@@ -264,13 +291,13 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
                                     children: [
                                       Icon(Icons.location_on,
                                           size: 12,
-                                          color: Colors.white.withOpacity(0.4)),
+                                          color: cs.onSurfaceVariant.withOpacity(0.6)),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
                                           job['location'],
                                           style: TextStyle(
-                                            color: Colors.white.withOpacity(0.4),
+                                            color: cs.onSurfaceVariant.withOpacity(0.6),
                                             fontSize: 11,
                                           ),
                                           maxLines: 1,
@@ -309,22 +336,5 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
                   ),
                 ),
     );
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'Applied':
-        return Icons.send;
-      case 'Reviewed':
-        return Icons.visibility;
-      case 'Interview':
-        return Icons.people;
-      case 'Accepted':
-        return Icons.celebration;
-      case 'Rejected':
-        return Icons.cancel;
-      default:
-        return Icons.work;
-    }
   }
 }

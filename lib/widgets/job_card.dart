@@ -17,11 +17,14 @@ class JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
+      elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cs.outlineVariant, width: 1),
       ),
       child: InkWell(
         onTap: onTap,
@@ -39,11 +42,7 @@ class JobCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      color: cs.primary, // Warna solid
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -51,8 +50,8 @@ class JobCard extends StatelessWidget {
                         job.company.isNotEmpty 
                             ? job.company[0].toUpperCase() 
                             : '?',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: cs.onPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
@@ -71,7 +70,7 @@ class JobCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey[700],
+                            color: cs.onSurfaceVariant,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -81,7 +80,7 @@ class JobCard extends StatelessWidget {
                           job.timeAgo,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: cs.onSurfaceVariant.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -94,8 +93,8 @@ class JobCard extends StatelessWidget {
                     icon: Icon(
                       isInWishlist ? Icons.bookmark : Icons.bookmark_border,
                       color: isInWishlist 
-                          ? const Color(0xFF5E35B1) 
-                          : Colors.grey[400],
+                          ? cs.primary 
+                          : cs.onSurfaceVariant.withOpacity(0.5),
                     ),
                     tooltip: isInWishlist 
                         ? 'Hapus dari wishlist' 
@@ -108,10 +107,10 @@ class JobCard extends StatelessWidget {
               // Job Title
               Text(
                 job.title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A237E),
+                  color: cs.onSurface,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -124,7 +123,7 @@ class JobCard extends StatelessWidget {
                   Icon(
                     Icons.location_on_outlined,
                     size: 16,
-                    color: Colors.grey[600],
+                    color: cs.onSurfaceVariant.withOpacity(0.7),
                   ),
                   const SizedBox(width: 4),
                   Expanded(
@@ -132,7 +131,7 @@ class JobCard extends StatelessWidget {
                       job.location,
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey[700],
+                        color: cs.onSurfaceVariant,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -149,29 +148,25 @@ class JobCard extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF5E35B1), Color(0xFF7E57C2)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
+                  color: cs.primary, // Warna solid
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.payments_outlined,
                       size: 14,
-                      color: Colors.white,
+                      color: cs.onPrimary,
                     ),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         job.salaryDisplay,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: cs.onPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -192,13 +187,14 @@ class JobCard extends StatelessWidget {
                         job.category!,
                         style: const TextStyle(fontSize: 11),
                       ),
-                      backgroundColor: Colors.purple[50],
-                      labelStyle: const TextStyle(
-                        color: Color(0xFF5E35B1),
+                      backgroundColor: cs.primaryContainer,
+                      labelStyle: TextStyle(
+                        color: cs.onPrimaryContainer,
                         fontWeight: FontWeight.w500,
                       ),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       visualDensity: VisualDensity.compact,
+                      side: BorderSide.none,
                     ),
                     if (job.contractType != null)
                       Chip(
@@ -206,13 +202,14 @@ class JobCard extends StatelessWidget {
                           job.contractType!,
                           style: const TextStyle(fontSize: 11),
                         ),
-                        backgroundColor: Colors.blue[50],
-                        labelStyle: const TextStyle(
-                          color: Color(0xFF1976D2),
+                        backgroundColor: cs.secondaryContainer,
+                        labelStyle: TextStyle(
+                          color: cs.onSecondaryContainer,
                           fontWeight: FontWeight.w500,
                         ),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         visualDensity: VisualDensity.compact,
+                        side: BorderSide.none,
                       ),
                   ],
                 ),

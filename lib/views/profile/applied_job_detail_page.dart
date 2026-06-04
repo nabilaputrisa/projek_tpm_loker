@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/database_helper.dart';
 
+
 class AppliedJobDetailPage extends StatefulWidget {
   final Map<String, dynamic> appliedJob;
 
@@ -22,23 +23,23 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final job = widget.appliedJob;
     final status = job['status'] ?? 'Applied';
-    final statusColor = _getStatusColor(status);
+    final statusColor = _getStatusColor(status, cs);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: cs.surfaceContainerHighest,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white70),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: cs.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Detail Lamaran',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
         actions: [
@@ -58,14 +59,7 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    statusColor.withOpacity(0.15),
-                    statusColor.withOpacity(0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: statusColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: statusColor.withOpacity(0.3)),
               ),
@@ -90,7 +84,7 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
                     _getStatusDescription(status),
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: cs.onSurfaceVariant,
                       fontSize: 13,
                     ),
                   ),
@@ -103,8 +97,15 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
             // Job Info Card
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A24),
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: cs.shadow.withOpacity(0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +114,7 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6C63FF).withOpacity(0.1),
+                      color: cs.primary.withOpacity(0.08),
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(20),
                         topRight: Radius.circular(20),
@@ -125,12 +126,12 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF6C63FF).withOpacity(0.2),
+                            color: cs.primary.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.work,
-                            color: Color(0xFF6C63FF),
+                            color: cs.primary,
                             size: 28,
                           ),
                         ),
@@ -141,8 +142,8 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
                             children: [
                               Text(
                                 job['job_title'] ?? 'Unknown Job',
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: cs.onSurface,
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -151,7 +152,7 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
                               Text(
                                 job['company'] ?? 'Unknown Company',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
+                                  color: cs.onSurfaceVariant,
                                   fontSize: 14,
                                 ),
                               ),
@@ -172,24 +173,28 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
                           icon: Icons.location_on,
                           label: 'Lokasi',
                           value: job['location'] ?? 'Tidak disebutkan',
+                          cs: cs,
                         ),
                         const SizedBox(height: 16),
                         _buildInfoRow(
                           icon: Icons.attach_money,
                           label: 'Estimasi Gaji',
                           value: job['salary'] ?? 'Tidak disebutkan',
+                          cs: cs,
                         ),
                         const SizedBox(height: 16),
                         _buildInfoRow(
                           icon: Icons.calendar_today,
                           label: 'Tanggal Melamar',
                           value: _formatDate(job['applied_date']),
+                          cs: cs,
                         ),
                         const SizedBox(height: 16),
                         _buildInfoRow(
                           icon: Icons.numbers,
                           label: 'ID Lamaran',
-                          value: '#${job['id']}',
+                          value: '#${job['job_id'] ?? job['id']}',
+                          cs: cs,
                         ),
                       ],
                     ),
@@ -204,17 +209,22 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A24),
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF6C63FF).withOpacity(0.2),
-                ),
+                border: Border.all(color: cs.outlineVariant),
+                boxShadow: [
+                  BoxShadow(
+                    color: cs.shadow.withOpacity(0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: const Color(0xFF6C63FF).withOpacity(0.7),
+                    color: cs.primary,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -222,7 +232,7 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
                     child: Text(
                       'Perusahaan akan menghubungi Anda melalui email atau telepon jika Anda lolos seleksi.',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: cs.onSurfaceVariant,
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -243,6 +253,7 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
     required IconData icon,
     required String label,
     required String value,
+    required ColorScheme cs,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,10 +262,10 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: const Color(0xFF6C63FF).withOpacity(0.1),
+            color: cs.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: const Color(0xFF6C63FF), size: 18),
+          child: Icon(icon, color: cs.primary, size: 18),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -264,15 +275,15 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
+                  color: cs.onSurfaceVariant,
                   fontSize: 11,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: cs.onSurface,
                   fontSize: 14,
                 ),
               ),
@@ -301,20 +312,20 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
     return months[month - 1];
   }
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(String status, ColorScheme cs) {
     switch (status) {
       case 'Applied':
-        return const Color(0xFF00D4AA);
+        return cs.secondary;
       case 'Reviewed':
         return Colors.orange;
       case 'Interview':
-        return const Color(0xFF6C63FF);
+        return cs.primary;
       case 'Accepted':
         return Colors.green;
       case 'Rejected':
-        return Colors.red;
+        return cs.error;
       default:
-        return Colors.grey;
+        return cs.onSurfaceVariant;
     }
   }
 
@@ -353,23 +364,25 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
   }
 
   void _showDeleteConfirmation() {
+    final cs = Theme.of(context).colorScheme;
+    
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A24),
+        backgroundColor: cs.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
+        title: Text(
           'Hapus Lamaran',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: cs.onSurface),
         ),
-        content: const Text(
+        content: Text(
           'Apakah Anda yakin ingin menghapus lamaran ini dari riwayat?',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: cs.onSurfaceVariant),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Batal', style: TextStyle(color: Colors.white54)),
+            child: Text('Batal', style: TextStyle(color: cs.onSurfaceVariant)),
           ),
           TextButton(
             onPressed: () => _deleteAppliedJob(ctx),
@@ -381,6 +394,7 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
   }
 
   Future<void> _deleteAppliedJob(BuildContext ctx) async {
+    final cs = Theme.of(context).colorScheme;
     setState(() => _isDeleting = true);
 
     try {
@@ -388,13 +402,13 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
       final username = prefs.getString('logged_username');
       
       if (username != null) {
-        await _dbHelper.removeAppliedJob(username, widget.appliedJob['job_id']);
+        await _dbHelper.removeAppliedJob(username, widget.appliedJob['job_id'] ?? widget.appliedJob['id']);
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Lamaran berhasil dihapus'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Lamaran berhasil dihapus'),
+              backgroundColor: cs.primary,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -407,7 +421,7 @@ class _AppliedJobDetailPageState extends State<AppliedJobDetailPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Gagal menghapus: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: cs.error,
           ),
         );
       }

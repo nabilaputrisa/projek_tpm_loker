@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
+
 
 class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});
@@ -54,21 +54,23 @@ class _FeedbackPageState extends State<FeedbackPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: cs.surfaceContainerHighest,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.white70,
+            color: cs.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Feedback TPM',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
@@ -81,34 +83,30 @@ class _FeedbackPageState extends State<FeedbackPage> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: cs.primary, // Warna solid
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.school_outlined,
                     size: 50,
-                    color: Colors.white,
+                    color: cs.onPrimary,
                   ),
                   const SizedBox(height: 10),
-                  const Text(
+                  Text(
                     'Mata Kuliah',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: cs.onPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 5),
-                  const Text(
+                  Text(
                     'Teknologi dan Pemrograman Mobile',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: cs.onPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
                     ),
@@ -122,7 +120,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: cs.onPrimary.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -132,8 +130,8 @@ class _FeedbackPageState extends State<FeedbackPage> {
                         const SizedBox(width: 4),
                         Text(
                           _averageRating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: cs.onPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -141,7 +139,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                         Text(
                           '(${_staticFeedbacks.length} ulasan)',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: cs.onPrimary.withOpacity(0.8),
                             fontSize: 12,
                           ),
                         ),
@@ -158,16 +156,23 @@ class _FeedbackPageState extends State<FeedbackPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A24),
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: cs.shadow.withOpacity(0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Statistik Rating',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: cs.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -189,8 +194,8 @@ class _FeedbackPageState extends State<FeedbackPage> {
                               children: [
                                 Text(
                                   rating.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white70,
+                                  style: TextStyle(
+                                    color: cs.onSurfaceVariant,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -207,9 +212,9 @@ class _FeedbackPageState extends State<FeedbackPage> {
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: percentage / 100,
-                                backgroundColor: Colors.grey.shade800,
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Color(0xFF6C63FF),
+                                backgroundColor: cs.outlineVariant,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  cs.primary,
                                 ),
                                 minHeight: 6,
                               ),
@@ -219,8 +224,8 @@ class _FeedbackPageState extends State<FeedbackPage> {
                             width: 35,
                             child: Text(
                               '$count',
-                              style: const TextStyle(
-                                color: Colors.white54,
+                              style: TextStyle(
+                                color: cs.onSurfaceVariant,
                                 fontSize: 12,
                               ),
                               textAlign: TextAlign.right,
@@ -240,10 +245,10 @@ class _FeedbackPageState extends State<FeedbackPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Ulasan Mahasiswa',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: cs.onSurface,
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
@@ -254,13 +259,13 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6C63FF).withOpacity(0.2),
+                    color: cs.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${_staticFeedbacks.length} ulasan',
-                    style: const TextStyle(
-                      color: Color(0xFF6C63FF),
+                    style: TextStyle(
+                      color: cs.primary,
                       fontSize: 12,
                     ),
                   ),
@@ -277,7 +282,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final feedback = _staticFeedbacks[index];
-                return _buildFeedbackCard(feedback);
+                return _buildFeedbackCard(feedback, cs);
               },
             ),
 
@@ -287,14 +292,21 @@ class _FeedbackPageState extends State<FeedbackPage> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A1A24),
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: cs.shadow.withOpacity(0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline,
-                    color: Color(0xFF6C63FF),
+                    color: cs.primary,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -302,7 +314,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     child: Text(
                       'Data feedback merupakan ulasan dari mahasiswa yang telah mengambil mata kuliah TPM.',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: cs.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -317,12 +329,19 @@ class _FeedbackPageState extends State<FeedbackPage> {
     );
   }
 
-  Widget _buildFeedbackCard(Map<String, dynamic> feedback) {
+  Widget _buildFeedbackCard(Map<String, dynamic> feedback, ColorScheme cs) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1A24),
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: cs.shadow.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,16 +353,14 @@ class _FeedbackPageState extends State<FeedbackPage> {
                 width: 45,
                 height: 45,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-                  ),
+                  color: cs.secondary, // Warna solid
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
                   child: Text(
                     feedback['avatar'],
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: cs.onSecondary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -357,8 +374,8 @@ class _FeedbackPageState extends State<FeedbackPage> {
                   children: [
                     Text(
                       feedback['name'],
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: cs.onSurface,
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
@@ -367,7 +384,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     Text(
                       feedback['nim'],
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: cs.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -403,7 +420,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
           Text(
             feedback['comment'],
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: cs.onSurfaceVariant,
               fontSize: 14,
               height: 1.4,
             ),
@@ -415,13 +432,13 @@ class _FeedbackPageState extends State<FeedbackPage> {
               Icon(
                 Icons.access_time,
                 size: 14,
-                color: Colors.white.withOpacity(0.4),
+                color: cs.onSurfaceVariant.withOpacity(0.6),
               ),
               const SizedBox(width: 4),
               Text(
                 feedback['date'],
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
+                  color: cs.onSurfaceVariant.withOpacity(0.6),
                   fontSize: 11,
                 ),
               ),
@@ -439,13 +456,13 @@ class _FeedbackPageState extends State<FeedbackPage> {
                     Icon(
                       Icons.favorite_border,
                       size: 14,
-                      color: Colors.white.withOpacity(0.4),
+                      color: cs.onSurfaceVariant.withOpacity(0.6),
                     ),
                     const SizedBox(width: 4),
                     Text(
                       feedback['likes'].toString(),
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.4),
+                        color: cs.onSurfaceVariant.withOpacity(0.6),
                         fontSize: 12,
                       ),
                     ),

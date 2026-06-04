@@ -53,6 +53,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
     'Admin Jobs',
   ];
 
+  // ── Warna tema ──────────────────────────────────────────────
+  static const Color _primary    = Color(0xFF5C7EA8);
+  static const Color _accent     = Color(0xFF7FA3C8);
+  static const Color _cardBg     = Color(0xFFFFFFFF);
+  static const Color _scaffoldBg = Color(0xFFEEF1F5);
+  static const Color _textPrimary   = Color(0xFF1A2B3C);
+  static const Color _textSecondary = Color(0xFF6B7C8D);
+  // ────────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
@@ -103,7 +112,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ? skillsStr.toString().split(',')
                     : [];
 
-            // Load CV
             final cvPath = _userProfile['cv_path'];
             if (cvPath != null && cvPath.toString().isNotEmpty) {
               final file = File(cvPath.toString());
@@ -119,7 +127,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
               _cvFile = null;
             }
 
-            // Load profile image
             final profileImage = _userProfile['profile_image'];
             if (profileImage != null && profileImage.toString().isNotEmpty) {
               final file = File(profileImage.toString());
@@ -151,13 +158,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  // Pilih foto profil — tampilkan pilihan kamera atau galeri
   Future<void> _pickProfileImage() async {
     if (!mounted) return;
 
+    final BuildContext currentContext = this.context;
     final ImageSource? source = await showModalBottomSheet<ImageSource>(
-      context: this.context,
-      backgroundColor: const Color(0xFF1A1A24),
+      context: currentContext,
+      backgroundColor: _cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -170,30 +177,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
               height: 4,
               margin: const EdgeInsets.only(top: 12, bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: Colors.black12,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const Text(
+            Text(
               'Pilih Foto Profil',
               style: TextStyle(
-                  color: Colors.white,
+                  color: _textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
             ListTile(
-              leading: const Icon(Icons.camera_alt_rounded,
-                  color: Color(0xFF6C63FF)),
-              title: const Text('Kamera',
-                  style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.camera_alt_rounded, color: _primary),
+              title: Text('Kamera', style: TextStyle(color: _textPrimary)),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_rounded,
-                  color: Color(0xFF6C63FF)),
-              title: const Text('Galeri',
-                  style: TextStyle(color: Colors.white)),
+              leading: const Icon(Icons.photo_library_rounded, color: _primary),
+              title: Text('Galeri', style: TextStyle(color: _textPrimary)),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
             const SizedBox(height: 8),
@@ -232,7 +235,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           'profile_${_username}_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final path = join(directory.path, fileName);
       await file.copy(path);
-      debugPrint('Profile image saved to: $path');
       return path;
     } catch (e) {
       debugPrint('Error saving profile image: $e');
@@ -264,8 +266,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final filePath = _cvFile?.path ?? _existingCvPath;
 
     if (filePath == null || filePath.isEmpty) {
-      _showSnackBar('Belum ada CV yang diupload',
-          backgroundColor: Colors.orange);
+      _showSnackBar('Belum ada CV yang diupload', backgroundColor: Colors.orange);
       return;
     }
 
@@ -282,8 +283,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             backgroundColor: Colors.red);
       }
     } catch (e) {
-      _showSnackBar('Tidak dapat membuka file CV: $e',
-          backgroundColor: Colors.red);
+      _showSnackBar('Tidak dapat membuka file CV: $e', backgroundColor: Colors.red);
     }
   }
 
@@ -294,23 +294,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
       context: this.context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A24),
-          title:
-              const Text('Hapus CV', style: TextStyle(color: Colors.white)),
-          content: const Text(
+          backgroundColor: _cardBg,
+          title: Text('Hapus CV', style: TextStyle(color: _textPrimary)),
+          content: Text(
             'Apakah Anda yakin ingin menghapus file CV ini?',
-            style: TextStyle(color: Colors.white70),
+            style: TextStyle(color: _textSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Batal',
-                  style: TextStyle(color: Colors.white54)),
+              child: Text('Batal', style: TextStyle(color: _textSecondary)),
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child:
-                  const Text('Hapus', style: TextStyle(color: Colors.red)),
+              child: const Text('Hapus', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -325,10 +322,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       final pathToDelete = _cvFile?.path ?? _existingCvPath;
       if (pathToDelete != null && pathToDelete.isNotEmpty) {
         final file = File(pathToDelete);
-        if (await file.exists()) {
-          await file.delete();
-          debugPrint('File CV deleted: $pathToDelete');
-        }
+        if (await file.exists()) await file.delete();
       }
 
       if (_username != null) {
@@ -372,7 +366,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           '${type}_${_username}_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final path = join(directory.path, fileName);
       await file.copy(path);
-      debugPrint('File saved to: $path');
       return path;
     } catch (e) {
       debugPrint('Error saving file: $e');
@@ -394,7 +387,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => _isLoading = true);
 
     try {
-      // Simpan foto profil jika ada yang baru
       String? savedProfileImagePath = _existingProfileImagePath;
       if (_profileImageFile != null &&
           _profileImageFile!.path != _existingProfileImagePath &&
@@ -403,7 +395,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             await _saveProfileImageToLocal(_profileImageFile!);
       }
 
-      // Tentukan cvPath
       String? savedCvPath;
       if (_cvDeleted) {
         savedCvPath = null;
@@ -431,8 +422,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       if (mounted) {
-        _showSnackBar('Profil berhasil diperbarui',
-            backgroundColor: Colors.green);
+        _showSnackBar('Profil berhasil diperbarui', backgroundColor: Colors.green);
         await _loadUserData();
       }
     } catch (e) {
@@ -455,7 +445,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Widget _buildAvatar() {
-    final hasImage = _profileImageFile != null || _existingProfileImagePath != null;
+    final hasImage =
+        _profileImageFile != null || _existingProfileImagePath != null;
     final imageFile = _profileImageFile ??
         (_existingProfileImagePath != null
             ? File(_existingProfileImagePath!)
@@ -481,7 +472,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   : _defaultAvatar(),
             ),
           ),
-          // Badge kamera di pojok kanan bawah
           Positioned(
             bottom: 0,
             right: 0,
@@ -489,9 +479,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: const Color(0xFF6C63FF),
+                color: _primary,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF0A0A0F), width: 2),
+                border: Border.all(color: _scaffoldBg, width: 2),
               ),
               child: const Icon(Icons.camera_alt_rounded,
                   size: 16, color: Colors.white),
@@ -506,13 +496,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Container(
       width: 100,
       height: 100,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF6C63FF), Color(0xFF00D4AA)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
+      color: _primary,
       child: const Icon(Icons.person_outline_rounded,
           size: 50, color: Colors.white),
     );
@@ -525,53 +509,48 @@ class _EditProfilePageState extends State<EditProfilePage> {
             (_existingCvPath != null && _existingCvPath!.isNotEmpty));
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: _scaffoldBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _primary,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: Colors.white70),
+              color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Edit Profile',
-          style:
-              TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6C63FF)),
+              child: CircularProgressIndicator(color: _primary),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
                   const SizedBox(height: 20),
-
-                  // Avatar dengan fitur ganti foto
                   _buildAvatar(),
                   const SizedBox(height: 8),
-                  const Text('Tap untuk ganti foto',
-                      style:
-                          TextStyle(color: Colors.white54, fontSize: 12)),
+                  Text('Tap untuk ganti foto',
+                      style: TextStyle(color: _textSecondary, fontSize: 12)),
                   const SizedBox(height: 24),
 
                   // Nama Lengkap
                   TextField(
                     controller: _nameController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration:
-                        _inputDecoration('Nama Lengkap', Icons.person),
+                    style: TextStyle(color: _textPrimary),
+                    decoration: _inputDecoration('Nama Lengkap', Icons.person),
                   ),
                   const SizedBox(height: 16),
 
                   // Email
                   TextField(
                     controller: _emailController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: _textPrimary),
                     keyboardType: TextInputType.emailAddress,
                     decoration: _inputDecoration('Email', Icons.email),
                   ),
@@ -580,15 +559,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   // Dropdown Gender
                   DropdownButtonFormField<String>(
                     value: _selectedGender,
-                    hint: const Text('Pilih Jenis Kelamin',
-                        style: TextStyle(color: Colors.white54)),
-                    dropdownColor: const Color(0xFF1A1A24),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration(
-                        'Jenis Kelamin', Icons.person_outline),
+                    hint: Text('Pilih Jenis Kelamin',
+                        style: TextStyle(color: _textSecondary)),
+                    dropdownColor: Colors.white,
+                    style: TextStyle(color: _textPrimary),
+                    decoration:
+                        _inputDecoration('Jenis Kelamin', Icons.person_outline),
                     items: _genderOptions
-                        .map((g) => DropdownMenuItem(
-                            value: g, child: Text(g)))
+                        .map((g) =>
+                            DropdownMenuItem(value: g, child: Text(g)))
                         .toList(),
                     onChanged: (value) {
                       if (mounted) setState(() => _selectedGender = value);
@@ -599,15 +578,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   // Dropdown Education
                   DropdownButtonFormField<String>(
                     value: _selectedEducation,
-                    hint: const Text('Pilih Pendidikan Terakhir',
-                        style: TextStyle(color: Colors.white54)),
-                    dropdownColor: const Color(0xFF1A1A24),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: _inputDecoration(
-                        'Pendidikan Terakhir', Icons.school),
+                    hint: Text('Pilih Pendidikan Terakhir',
+                        style: TextStyle(color: _textSecondary)),
+                    dropdownColor: Colors.white,
+                    style: TextStyle(color: _textPrimary),
+                    decoration:
+                        _inputDecoration('Pendidikan Terakhir', Icons.school),
                     items: _educationOptions
-                        .map((e) => DropdownMenuItem(
-                            value: e, child: Text(e)))
+                        .map((e) =>
+                            DropdownMenuItem(value: e, child: Text(e)))
                         .toList(),
                     onChanged: (value) {
                       if (mounted) setState(() => _selectedEducation = value);
@@ -619,20 +598,26 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A24),
+                      color: _cardBg,
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(Icons.code,
-                                color: Color(0xFF6C63FF), size: 20),
-                            SizedBox(width: 8),
+                            const Icon(Icons.code, color: _primary, size: 20),
+                            const SizedBox(width: 8),
                             Text('Skill / Keahlian',
                                 style: TextStyle(
-                                    color: Colors.white,
+                                    color: _textPrimary,
                                     fontWeight: FontWeight.w500)),
                           ],
                         ),
@@ -641,16 +626,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           spacing: 8,
                           runSpacing: 8,
                           children: _allSkills.map((skill) {
-                            final isSelected =
-                                _selectedSkills.contains(skill);
+                            final isSelected = _selectedSkills.contains(skill);
                             return FilterChip(
                               label: Text(skill,
                                   style: TextStyle(
                                       color: isSelected
                                           ? Colors.white
-                                          : Colors.white70)),
-                              backgroundColor: const Color(0xFF2A2A3A),
-                              selectedColor: const Color(0xFF6C63FF),
+                                          : _textSecondary)),
+                              backgroundColor: const Color(0xFFF0F4F8),
+                              selectedColor: _primary,
                               selected: isSelected,
                               onSelected: (selected) {
                                 if (!mounted) return;
@@ -674,20 +658,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A24),
+                      color: _cardBg,
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Row(
+                        Row(
                           children: [
-                            Icon(Icons.picture_as_pdf,
-                                color: Color(0xFF6C63FF), size: 20),
-                            SizedBox(width: 8),
+                            const Icon(Icons.picture_as_pdf,
+                                color: _primary, size: 20),
+                            const SizedBox(width: 8),
                             Text('Curriculum Vitae (CV)',
                                 style: TextStyle(
-                                    color: Colors.white,
+                                    color: _textPrimary,
                                     fontWeight: FontWeight.w500)),
                           ],
                         ),
@@ -701,9 +692,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               icon: const Icon(Icons.upload_file, size: 18),
                               label: const Text('Pilih File PDF'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6C63FF)
-                                    .withOpacity(0.2),
-                                foregroundColor: const Color(0xFF6C63FF),
+                                backgroundColor: _primary.withOpacity(0.1),
+                                foregroundColor: _primary,
+                                elevation: 0,
                               ),
                             ),
                             if (hasCV) ...[
@@ -712,9 +703,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 icon: const Icon(Icons.visibility, size: 18),
                                 label: const Text('Lihat'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF00D4AA)
-                                      .withOpacity(0.2),
-                                  foregroundColor: const Color(0xFF00D4AA),
+                                  backgroundColor: _accent.withOpacity(0.1),
+                                  foregroundColor: _accent,
+                                  elevation: 0,
                                 ),
                               ),
                               ElevatedButton.icon(
@@ -724,9 +715,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                     size: 18),
                                 label: const Text('Hapus'),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor:
-                                      Colors.red.withOpacity(0.2),
+                                  backgroundColor: Colors.red.withOpacity(0.1),
                                   foregroundColor: Colors.red,
+                                  elevation: 0,
                                 ),
                               ),
                             ],
@@ -737,8 +728,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             padding: const EdgeInsets.only(top: 12),
                             child: Text(
                               'CV terupload: ${_cvFile != null ? _cvFile!.path.split('/').last : (_existingCvPath?.split('/').last ?? 'CV.pdf')}',
-                              style: const TextStyle(
-                                  color: Colors.white54, fontSize: 11),
+                              style: TextStyle(
+                                  color: _textSecondary, fontSize: 11),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -751,17 +742,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   // Bio
                   TextField(
                     controller: _bioController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: _textPrimary),
                     maxLines: 4,
-                    decoration: _inputDecoration(
-                        'Tentang Saya', Icons.description),
+                    decoration:
+                        _inputDecoration('Tentang Saya', Icons.description),
                   ),
                   const SizedBox(height: 16),
 
                   // Password Baru
                   TextField(
                     controller: _passwordController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: _textPrimary),
                     obscureText: true,
                     decoration: _inputDecoration(
                         'Password Baru (opsional)', Icons.lock),
@@ -775,7 +766,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     child: ElevatedButton(
                       onPressed: _saveProfile,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C63FF),
+                        backgroundColor: _primary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -797,17 +790,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: Colors.white54),
-      prefixIcon: Icon(icon, color: const Color(0xFF6C63FF)),
+      labelStyle: TextStyle(color: _textSecondary),
+      prefixIcon: Icon(icon, color: _primary),
       filled: true,
-      fillColor: const Color(0xFF1A1A24),
+      fillColor: _cardBg,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF6C63FF)),
+        borderSide: const BorderSide(color: _primary),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.black.withOpacity(0.08)),
       ),
     );
   }

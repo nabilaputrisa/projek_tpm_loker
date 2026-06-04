@@ -1,17 +1,3 @@
-// lib/widgets/map_preview_widget.dart
-//
-// Mini map di halaman detail lowongan.
-// Fitur:
-//   • Marker lokasi kantor
-//   • Tombol "Lokasi Saya" → GPS fokus ke posisi user
-//   • CompassPointer overlay → panah berputar real-time (Magnetometer)
-//   • Snackbar informatif saat error GPS / sensor tidak tersedia
-//
-// PERUBAHAN (FIX BUG 3):
-//   Ditambahkan _HeadingSmoother untuk meredam jitter sensor magnetometer.
-//   Raw sensor noise menyebabkan panah bergetar tiap frame. Moving average
-//   5 sampel menghaluskan pergerakan tanpa menambah lag yang terasa.
-
 import 'dart:async';
 import 'dart:math' as math;
 
@@ -23,32 +9,19 @@ import 'package:geolocator/geolocator.dart';
 import '../data/services/location_service.dart';
 import 'compass_pointer.dart';
 
-// ════════════════════════════════════════════════════════════════════════════
-// HEADING SMOOTHER (FIX BUG 3)
-// ════════════════════════════════════════════════════════════════════════════
-
-/// Moving average sederhana untuk heading kompas.
-///
-/// Masalah: Raw magnetometer sangat noisy → panah bergetar terus.
-/// Solusi: Rata-ratakan N sampel terakhir. Dengan [windowSize] = 5
-/// getaran halus teredam tanpa lag yang terasa oleh pengguna.
-///
-/// Catatan khusus heading: rata-rata circular (bukan aritmatika biasa)
-/// dipakai agar transisi 359°→1° tidak menghasilkan 180° (Selatan).
 class _HeadingSmoother {
   final int windowSize;
   final List<double> _samples = [];
 
   _HeadingSmoother({this.windowSize = 5});
 
-  /// Tambahkan sampel baru dan kembalikan heading yang sudah dihaluskan.
+
   double add(double heading) {
     _samples.add(heading);
     if (_samples.length > windowSize) _samples.removeAt(0);
     return _average();
   }
 
-  /// Circular mean: konversi ke vektor unit, rata-ratakan, konversi balik.
   double _average() {
     double sinSum = 0;
     double cosSum = 0;
