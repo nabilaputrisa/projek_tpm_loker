@@ -1,3 +1,6 @@
+// lib/services/notification_service.dart
+
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
@@ -35,6 +38,8 @@ class NotificationService {
         ?.requestNotificationsPermission();
   }
 
+  // ========== INTERVIEW NOTIFICATIONS ==========
+  
   // Jadwalkan 3 notifikasi sekaligus untuk satu jadwal interview:
   // 1. H-1 hari  → notif penyemangat
   // 2. H-1 jam   → notif siap-siap
@@ -129,6 +134,44 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
+  // ========== JOB APPLICATION NOTIFICATIONS ==========
+  
+  // Notifikasi instan untuk lamaran pekerjaan berhasil
+  Future<void> showJobAppliedNotification({
+    required String jobTitle,
+    required String companyName,
+  }) async {
+    const androidDetails = AndroidNotificationDetails(
+      'job_application_channel',
+      'Lamaran Pekerjaan',
+      channelDescription: 'Notifikasi untuk lamaran pekerjaan',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      color: Color(0xFF1A3C5E),
+    );
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+    const details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    // ID unik berdasarkan timestamp
+    final notificationId = DateTime.now().millisecondsSinceEpoch % 100000;
+    
+    await _plugin.show(
+      notificationId,
+      'Lamaran Terkirim! 🎉',
+      'Lamaran untuk "$jobTitle" di $companyName telah berhasil dikirim',
+      details,
+    );
+  }
+
+  // Notifikasi umum instan
   Future<void> showInstantNotification({
     required int id,
     required String title,

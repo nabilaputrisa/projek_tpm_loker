@@ -1,13 +1,15 @@
 // lib/views/home/job_detail_page.dart
-//
-// Halaman detail lowongan kerja.
 
 import 'package:flutter/material.dart';
+import 'package:projektpm/data/services/notification_service.dart';
 import 'package:readmore/readmore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models/job_model.dart';
 import '../../widgets/currency_converter_sheet.dart';
 import '../../widgets/timezone_converter_sheet.dart';
 import '../../widgets/map_preview_widget.dart';
+import '../../data/database/database_helper.dart';
+import '../profile/edit_profile_page.dart';
 
 class JobDetailPage extends StatelessWidget {
   final JobModel job;
@@ -304,37 +306,211 @@ class JobDetailPage extends StatelessWidget {
 
   // ── Apply Button ───────────────────────────────────────────────────────────
   Widget _buildApplyButton(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.9,
-      height: 56,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-            colors: [Color(0xFF1A3C5E), Color(0xFF2D6A9F)]),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1A3C5E).withOpacity(0.35),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+    return FutureBuilder<bool>(
+      future: _hasApplied(),
+      builder: (context, snapshot) {
+        final hasApplied = snapshot.data ?? false;
+        
+        return Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: hasApplied
+                ? LinearGradient(
+                    colors: [Colors.grey.shade600, Colors.grey.shade800])
+                : const LinearGradient(
+                    colors: [Color(0xFF1A3C5E), Color(0xFF2D6A9F)]),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: (hasApplied ? Colors.grey : const Color(0xFF1A3C5E))
+                    .withOpacity(0.35),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: hasApplied
+                  ? null
+                  : () => _applyForJob(context),
+              child: Center(
+                child: Text(
+                  hasApplied ? "✓ SUDAH DILAMAR" : "LAMAR SEKARANG",
+                  style: TextStyle(
+                      color: hasApplied ? Colors.white70 : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      letterSpacing: 1.2),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Apply Logic ────────────────────────────────────────────────────────────
+  Future<bool> _hasApplied() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final username = prefs.getString('logged_username');
+      if (username == null) return false;
+      
+      final dbHelper = DatabaseHelper();
+      return await dbHelper.hasApplied(username, job.id);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> _applyForJob(BuildContext context) async {
+    // Cek apakah user sudah login
+    final prefs = await SharedPreferences.getInstance();
+    final username = prefs.getString('logged_username');
+    
+    if (username == null) {
+      _showSnackBar(context, 'Silakan login terlebih dahulu', isError: true);
+      return;
+    }
+
+    // Cek apakah user sudah memiliki CV
+    final dbHelper = DatabaseHelper();
+    final userData = await dbHelper.getUserByUsername(username);
+    final hasCV = userData?['cv_path'] != null && 
+                  userData!['cv_path'].toString().isNotEmpty;
+    
+    if (!hasCV) {
+      _showApplyErrorDialog(
+        context,
+        'CV Belum Diupload',
+        'Silakan upload CV terlebih dahulu di halaman Edit Profile sebelum melamar pekerjaan.',
+      );
+      return;
+    }
+
+    // Cek apakah sudah pernah melamar
+    final alreadyApplied = await dbHelper.hasApplied(username, job.id);
+    if (alreadyApplied) {
+      _showSnackBar(context, 'Anda sudah melamar pekerjaan ini sebelumnya');
+      return;
+    }
+
+    // Proses lamaran
+    try {
+      // Konversi JobModel ke Map
+      final jobMap = {
+        'id': job.id,
+        'title': job.title,
+        'company': job.company,
+        'location': job.location,
+        'salary': job.salaryDisplay,
+      };
+      
+      await dbHelper.saveAppliedJob(username, jobMap);
+      
+      // Kirim notifikasi menggunakan NotificationService yang sudah ada
+      await NotificationService().showJobAppliedNotification(
+        jobTitle: job.title,
+        companyName: job.company,
+      );
+      
+      // Tampilkan dialog sukses
+      _showApplySuccessDialog(context);
+      
+    } catch (e) {
+      debugPrint('Error applying for job: $e');
+      _showSnackBar(context, 'Gagal melamar: $e', isError: true);
+    }
+  }
+
+  void _showSnackBar(BuildContext context, String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showApplySuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Column(
+          children: const [
+            Icon(Icons.check_circle, color: Colors.green, size: 60),
+            SizedBox(height: 16),
+            Text('Lamaran Terkirim!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Lamaran untuk posisi "${job.title}" di ${job.company} telah berhasil dikirim.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14),
+            ),
+            
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              // Refresh halaman dengan push replacement
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => JobDetailPage(job: job),
+                ),
+              );
+            },
+            child: const Text('OK', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {},
-          child: const Center(
-            child: Text(
-              "LAMAR SEKARANG",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  letterSpacing: 1.2),
-            ),
-          ),
+    );
+  }
+
+  void _showApplyErrorDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.orange, size: 28),
+            const SizedBox(width: 12),
+            Text(title, style: const TextStyle(fontSize: 18)),
+          ],
         ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditProfilePage()),
+              );
+            },
+            child: const Text('Upload CV', style: TextStyle(color: Color(0xFF2D6A9F))),
+          ),
+        ],
       ),
     );
   }
@@ -364,7 +540,7 @@ class JobDetailPage extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// REUSABLE WIDGETS
+// REUSABLE WIDGETS (sama seperti sebelumnya)
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _OutlineButton extends StatelessWidget {
