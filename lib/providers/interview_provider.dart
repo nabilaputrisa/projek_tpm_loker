@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/database/database_helper.dart';
 import '../data/models/interview_model.dart';
 import '../data/services/notification_service.dart';
@@ -13,8 +14,7 @@ class InterviewProvider extends ChangeNotifier {
   List<InterviewModel> _interviews = [];
   InterviewState _state = InterviewState.initial;
   String? _errorMessage;
-
-  // Timer untuk auto-refresh status upcoming/past tiap menit
+  String? _currentUsername;
   Timer? _refreshTimer;
 
   List<InterviewModel> get interviews => _interviews;
@@ -27,42 +27,37 @@ class InterviewProvider extends ChangeNotifier {
   List<InterviewModel> get pastInterviews =>
       _interviews.where((i) => !i.isUpcoming).toList();
 
-  // Panggil ini saat provider pertama kali dipakai (di initState atau ProxyProvider)
+  Future<void> _loadUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    _currentUsername = prefs.getString('logged_username');
+  }
+
   void startAutoRefresh() {
     _refreshTimer?.cancel();
-    // Cek tiap 1 menit — kalau ada interview yang baru lewat, UI langsung update
     _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (_state == InterviewState.loaded) {
-        // Tidak perlu hit DB lagi; cukup notifyListeners supaya getter
-        // upcomingInterviews / pastInterviews dihitung ulang berdasarkan waktu sekarang
         notifyListeners();
       }
     });
   }
 
-  @override
-  void dispose() {
-    _refreshTimer?.cancel();
-    super.dispose();
-  }
-
   Future<void> loadInterviews() async {
+    await _loadUsername();
+    if (_currentUsername == null) return;
+    
     _state = InterviewState.loading;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final raw = await _db.getAllInterviews();
+      final raw = await _db.getAllInterviews(_currentUsername!);
       _interviews = raw.map((m) => InterviewModel.fromMap(m)).toList();
       _state = InterviewState.loaded;
-
-      // Pastikan timer jalan setelah data pertama kali dimuat
       startAutoRefresh();
     } catch (e) {
       _state = InterviewState.error;
       _errorMessage = 'Gagal memuat jadwal interview: $e';
     }
-
     notifyListeners();
   }
 
@@ -72,13 +67,19 @@ class InterviewProvider extends ChangeNotifier {
     String? notes,
     required DateTime interviewDateTime,
   }) async {
+    await _loadUsername();
+    if (_currentUsername == null) return false;
+    
     try {
       final id = await _db.addInterview(
+        username: _currentUsername!,
         jobTitle: jobTitle,
         companyName: companyName,
         notes: notes,
         interviewDateTime: interviewDateTime,
       );
+
+      if (id == 0) return false;
 
       final newInterview = InterviewModel(
         id: id,
@@ -90,8 +91,7 @@ class InterviewProvider extends ChangeNotifier {
       );
 
       _interviews.add(newInterview);
-      _interviews.sort(
-          (a, b) => a.interviewDateTime.compareTo(b.interviewDateTime));
+      _interviews.sort((a, b) => a.interviewDateTime.compareTo(b.interviewDateTime));
 
       await _notificationService.scheduleInterviewNotification(
         id: id,
@@ -116,14 +116,20 @@ class InterviewProvider extends ChangeNotifier {
     String? notes,
     required DateTime interviewDateTime,
   }) async {
+    await _loadUsername();
+    if (_currentUsername == null) return false;
+    
     try {
-      await _db.updateInterview(
+      final rowsUpdated = await _db.updateInterview(
         id: id,
+        username: _currentUsername!,
         jobTitle: jobTitle,
         companyName: companyName,
         notes: notes,
         interviewDateTime: interviewDateTime,
       );
+
+      if (rowsUpdated == 0) return false;
 
       final index = _interviews.indexWhere((i) => i.id == id);
       if (index != -1) {
@@ -133,11 +139,9 @@ class InterviewProvider extends ChangeNotifier {
           notes: notes,
           interviewDateTime: interviewDateTime,
         );
-        _interviews.sort(
-            (a, b) => a.interviewDateTime.compareTo(b.interviewDateTime));
+        _interviews.sort((a, b) => a.interviewDateTime.compareTo(b.interviewDateTime));
       }
 
-      // Cancel notif lama (3 ID) lalu jadwalkan ulang
       await _notificationService.cancelNotification(id);
       await _notificationService.scheduleInterviewNotification(
         id: id,
@@ -156,8 +160,13 @@ class InterviewProvider extends ChangeNotifier {
   }
 
   Future<bool> deleteInterview(int id) async {
+    await _loadUsername();
+    if (_currentUsername == null) return false;
+    
     try {
-      await _db.deleteInterview(id);
+      final rowsDeleted = await _db.deleteInterview(id, _currentUsername!);
+      if (rowsDeleted == 0) return false;
+      
       _interviews.removeWhere((i) => i.id == id);
       await _notificationService.cancelNotification(id);
       notifyListeners();
@@ -180,5 +189,17 @@ class InterviewProvider extends ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  void clearInterviews() {
+    _interviews.clear();
+    _currentUsername = null;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 }

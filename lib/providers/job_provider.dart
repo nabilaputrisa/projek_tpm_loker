@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/job_model.dart';
 import '../data/services/api_job_service.dart';
 import '../data/database/database_helper.dart';
@@ -38,6 +39,7 @@ class JobProvider with ChangeNotifier {
   String _selectedCountry = 'sg';
   SalaryRange? _selectedSalaryRange;
 
+  // Getters
   List<JobModel> get jobs => _jobs;
   List<JobModel> get wishlist => _wishlist;
   bool get isLoading => _isLoading;
@@ -54,6 +56,10 @@ class JobProvider with ChangeNotifier {
   String get selectedCountry => _selectedCountry;
   SalaryRange? get selectedSalaryRange => _selectedSalaryRange;
 
+  // ============================================
+  // JOBS API
+  // ============================================
+
   Future<void> fetchJobs({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
@@ -66,7 +72,6 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Mengambil nilai filter gaji untuk dikirim ke API
       double? filterMin = _selectedSalaryRange?.min;
       double? filterMax = _selectedSalaryRange?.max;
 
@@ -77,8 +82,8 @@ class JobProvider with ChangeNotifier {
         page: _currentPage,
         sortBy: _sortBy,
         countryCode: _selectedCountry,
-        salaryMin: (filterMin != null && filterMin > 0) ? filterMin : null, // Kirim ke API jika > 0
-        salaryMax: filterMax, // Kirim ke API jika tidak null
+        salaryMin: (filterMin != null && filterMin > 0) ? filterMin : null,
+        salaryMax: filterMax,
         country: '',
       );
 
@@ -91,9 +96,7 @@ class JobProvider with ChangeNotifier {
           _allJobs.addAll(fetchedJobs);
         }
         
-        // Saring kembali di sisi client menggunakan logika eliminasi irisan rentang
         _applySalaryFilter();
-        
         _totalJobs = result['total'];
         _totalPages = result['totalPages'];
         _errorMessage = null;
@@ -108,7 +111,6 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ✅ LOGIKA PENYARINGAN ELEMINASI RENTANG GAJI
   void _applySalaryFilter() {
     if (_selectedSalaryRange == null) {
       _jobs = List.from(_allJobs);
@@ -119,7 +121,6 @@ class JobProvider with ChangeNotifier {
     final filterMax = _selectedSalaryRange!.max;
 
     _jobs = _allJobs.where((job) {
-      // Jika user sedang memfilter gaji, sembunyikan lowongan yang tidak mencantumkan info gaji
       if (job.salaryMin == null && job.salaryMax == null) {
         return false;
       }
@@ -127,16 +128,12 @@ class JobProvider with ChangeNotifier {
       final jobMin = job.salaryMin ?? 0;
       final jobMax = job.salaryMax ?? jobMin;
 
-      // Eliminasi 1: Batas atas lowongan (jobMax) lebih kecil dari filter minimal user (pasti tidak masuk kriteria)
       if (filterMin > 0 && jobMax < filterMin) {
         return false;
       }
-
-      // Eliminasi 2: Batas bawah lowongan (jobMin) melebihi batas maksimal user (pasti kemahalan/di luar kriteria)
       if (filterMax != null && jobMin > filterMax) {
         return false;
       }
-      
       return true;
     }).toList();
   }
@@ -198,21 +195,29 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ========== WISHLIST ==========
+  // ============================================
+  // WISHLIST METHODS (DENGAN user_id)
+  // ============================================
+
+  Future<String?> _getCurrentUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('logged_username');
+  }
 
   Future<void> loadWishlist() async {
+    final username = await _getCurrentUsername();
+    if (username == null) return;
+    
     try {
-      final rows = await _dbHelper.getWishlist();
+      final rows = await _dbHelper.getWishlist(username);
       _wishlist = rows.map((row) => JobModel(
-        id: row['id'] as String,
+        id: row['job_id'] as String,
         title: row['title'] as String,
         company: (row['company'] as String?) ?? '',
         location: (row['location'] as String?) ?? '',
         description: '',
         createdAt: DateTime.now(),
         redirectUrl: '',
-        salaryMin: null,
-        salaryMax: null,
         salaryDisplay: (row['salary'] as String?) ?? 'Gaji tidak tersedia',
         category: row['category'] as String?,
         contractType: row['contract_type'] as String?,
@@ -223,18 +228,17 @@ class JobProvider with ChangeNotifier {
     }
   }
 
-  bool isInWishlist(String jobId) {
-    return _wishlist.any((job) => job.id == jobId);
-  }
-
   Future<void> toggleWishlist(JobModel job) async {
+    final username = await _getCurrentUsername();
+    if (username == null) return;
+    
     try {
       if (isInWishlist(job.id)) {
-        await _dbHelper.removeFromWishlist(job.id);
+        await _dbHelper.removeFromWishlist(username, job.id);
         _wishlist.removeWhere((j) => j.id == job.id);
       } else {
-        await _dbHelper.addToWishlist({
-          'id': job.id,
+        await _dbHelper.addToWishlist(username, {
+          'job_id': job.id,
           'title': job.title,
           'company': job.company,
           'location': job.location,
@@ -251,14 +255,19 @@ class JobProvider with ChangeNotifier {
   }
 
   Future<void> clearWishlist() async {
+    final username = await _getCurrentUsername();
+    if (username == null) return;
+    
     try {
-      for (var job in _wishlist) {
-        await _dbHelper.removeFromWishlist(job.id);
-      }
+      await _dbHelper.clearWishlist(username);
       _wishlist.clear();
       notifyListeners();
     } catch (e) {
       debugPrint('Error clearing wishlist: $e');
     }
+  }
+
+  bool isInWishlist(String jobId) {
+    return _wishlist.any((job) => job.id == jobId);
   }
 }

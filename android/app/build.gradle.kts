@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,71 +8,50 @@ plugins {
 }
 
 
-// Load secrets.properties file
-def secretsProperties = new Properties()
-def secretsFile = rootProject.file("secrets.properties")
+// MEMBACA API KEY DARI SECRET.PROPERTIES
 
-// Cek apakah file secrets.properties ada
+val secretsProperties = Properties()
+val secretsFile = rootProject.file("secret.properties") 
+
 if (secretsFile.exists()) {
-    secretsProperties.load(new FileInputStream(secretsFile))
-    println "✅ secrets.properties loaded successfully"
+    secretsProperties.load(FileInputStream(secretsFile))
+    println("✅ secret.properties loaded successfully")
 } else {
-    println "⚠️ secrets.properties not found. Google Maps API Key may not work."
+    println("⚠️ secret.properties not found. Google Maps API Key may not work.")
 }
 
 android {
-
     namespace = "com.example.projektpm"
-
     compileSdk = flutter.compileSdkVersion
-
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-
-        // DESUGARING
         isCoreLibraryDesugaringEnabled = true
-
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 
     defaultConfig {
-
-        // APPLICATION ID
         applicationId = "com.example.google_maps_in_flutter"
-
-        // MIN SDK GOOGLE MAPS
         minSdk = flutter.minSdkVersion
-
         targetSdk = flutter.targetSdkVersion
-
         versionCode = flutter.versionCode
-
         versionName = flutter.versionName
-
-        // MULTIDEX
         multiDexEnabled = true
 
-      
-        // Mengirim API key dari secrets.properties ke AndroidManifest.xml
-        manifestPlaceholders = [
-            mapsApiKey: secretsProperties.getProperty("MAPS_API_KEY", ""),
-            // Format: "MAPS_API_KEY" adalah key di secrets.properties
-            // "mapsApiKey" adalah placeholder di AndroidManifest.xml
-        ]
+        // MANIFEST PLACEHOLDERS
+        manifestPlaceholders.put(
+            "mapsApiKey", secretsProperties.getProperty("MAPS_API_KEY", "")
+        )
     }
 
     buildTypes {
-
         release {
-
-            signingConfig =
-                signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
@@ -79,9 +61,5 @@ flutter {
 }
 
 dependencies {
-
-    // DESUGARING LIBRARY
-    coreLibraryDesugaring(
-        "com.android.tools:desugar_jdk_libs:2.0.3"
-    )
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.3")
 }

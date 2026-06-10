@@ -22,13 +22,14 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'job_portal.db');
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    // Tabel users
     await db.execute('''
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,30 +47,39 @@ class DatabaseHelper {
       )
     ''');
 
+    // Tabel wishlist (DENGAN user_id)
     await db.execute('''
       CREATE TABLE wishlist (
-        id TEXT PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        job_id TEXT NOT NULL,
         title TEXT NOT NULL,
         company TEXT,
         location TEXT,
         salary TEXT,
         category TEXT,
         contract_type TEXT,
-        added_at TEXT DEFAULT CURRENT_TIMESTAMP
+        added_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+        UNIQUE(user_id, job_id)
       )
     ''');
 
+    // Tabel interviews (DENGAN user_id)
     await db.execute('''
       CREATE TABLE interviews (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
         job_title TEXT NOT NULL,
         company_name TEXT NOT NULL,
         notes TEXT,
         interview_date_time TEXT NOT NULL,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
       )
     ''');
 
+    // Tabel applied_jobs
     await db.execute('''
       CREATE TABLE applied_jobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -85,6 +95,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // Tabel saved_company_favorites
     await db.execute('''
       CREATE TABLE saved_company_favorites (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -176,13 +187,8 @@ class DatabaseHelper {
       }
     }
 
-    // Upgrade v6: restrukturisasi tabel interviews
-    // Tambah kolom notes, rename interview_time -> interview_date_time,
-    // hapus location_coords
     if (oldVersion < 6) {
       try {
-        // SQLite tidak support DROP COLUMN / RENAME COLUMN di versi lama,
-        // jadi pakai strategi: buat tabel baru, copy data, drop lama, rename
         await db.execute('''
           CREATE TABLE interviews_new (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -193,20 +199,90 @@ class DatabaseHelper {
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
           )
         ''');
-
-        // Migrasi data lama — interview_time dipindah ke interview_date_time
         await db.execute('''
           INSERT INTO interviews_new (id, job_title, company_name, notes, interview_date_time, created_at)
           SELECT id, job_title, company_name, NULL, interview_time, created_at
           FROM interviews
         ''');
-
         await db.execute('DROP TABLE interviews');
         await db.execute('ALTER TABLE interviews_new RENAME TO interviews');
-
         debugPrint('Upgrade v6 berhasil: tabel interviews distrukturisasi');
       } catch (e) {
         debugPrint('Error upgrade v6 (interviews): $e');
+      }
+    }
+
+    // ============================================
+    // MIGRASI VERSI 7: TAMBAHKAN user_id KE wishlist DAN interviews
+    // ============================================
+    if (oldVersion < 7) {
+      try {
+        debugPrint('Running migration to version 7: Add user_id to wishlist and interviews');
+        
+        // -----------------------------------------------------------------
+        // 1. PERBAIKI TABEL WISHLIST
+        // -----------------------------------------------------------------
+        await db.execute('''
+          CREATE TABLE wishlist_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            job_id TEXT NOT NULL,
+            title TEXT NOT NULL,
+            company TEXT,
+            location TEXT,
+            salary TEXT,
+            category TEXT,
+            contract_type TEXT,
+            added_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+            UNIQUE(user_id, job_id)
+          )
+        ''');
+        
+        await db.execute('''
+          INSERT INTO wishlist_new (user_id, job_id, title, company, location, salary, category, contract_type, added_at)
+          SELECT 
+            (SELECT id FROM users LIMIT 1),
+            id, title, company, location, salary, category, contract_type, added_at
+          FROM wishlist
+          WHERE EXISTS (SELECT 1 FROM users LIMIT 1)
+        ''');
+        
+        await db.execute('DROP TABLE wishlist');
+        await db.execute('ALTER TABLE wishlist_new RENAME TO wishlist');
+        
+        // -----------------------------------------------------------------
+        // 2. PERBAIKI TABEL INTERVIEWS
+        // -----------------------------------------------------------------
+        await db.execute('''
+          CREATE TABLE interviews_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            job_title TEXT NOT NULL,
+            company_name TEXT NOT NULL,
+            notes TEXT,
+            interview_date_time TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+          )
+        ''');
+        
+        await db.execute('''
+          INSERT INTO interviews_new (user_id, job_title, company_name, notes, interview_date_time, created_at)
+          SELECT 
+            (SELECT id FROM users LIMIT 1),
+            job_title, company_name, notes, interview_date_time, created_at
+          FROM interviews
+          WHERE EXISTS (SELECT 1 FROM users LIMIT 1)
+        ''');
+        
+        await db.execute('DROP TABLE interviews');
+        await db.execute('ALTER TABLE interviews_new RENAME TO interviews');
+        
+        debugPrint('Migration to version 7 completed successfully!');
+        
+      } catch (e) {
+        debugPrint('Error upgrading to version 7: $e');
       }
     }
   }
@@ -297,15 +373,12 @@ class DatabaseHelper {
       updateData['password'] = _hashPassword(newPassword);
     }
 
-    debugPrint('updateUserProfileFull: $updateData');
-
-    final rows = await db.update(
+    await db.update(
       'users',
       updateData,
       where: 'username = ?',
       whereArgs: [username],
     );
-    debugPrint('Rows affected: $rows');
   }
 
   Future<void> updateProfileImage(String username, String imagePath) async {
@@ -318,31 +391,98 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> updateUserProfile(
-    String username,
-    String fullName,
-    String email,
-    String? newPassword,
-  ) async {
-    await updateUserProfileFull(
-      username,
-      fullName: fullName,
-      email: email,
-      newPassword: newPassword,
+  // ========== WISHLIST METHODS (DENGAN user_id) ==========
+
+  Future<int> addToWishlist(String username, Map<String, dynamic> job) async {
+    final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return 0;
+    
+    final existing = await db.query(
+      'wishlist',
+      where: 'user_id = ? AND job_id = ?',
+      whereArgs: [user['id'], job['job_id']],
+    );
+    if (existing.isNotEmpty) return 0;
+    
+    return await db.insert('wishlist', {
+      'user_id': user['id'],
+      'job_id': job['job_id'],
+      'title': job['title'],
+      'company': job['company'],
+      'location': job['location'],
+      'salary': job['salary'],
+      'category': job['category'],
+      'contract_type': job['contract_type'],
+      'added_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getWishlist(String username) async {
+    final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return [];
+    
+    return await db.query(
+      'wishlist',
+      where: 'user_id = ?',
+      whereArgs: [user['id']],
+      orderBy: 'added_at DESC',
     );
   }
 
-  // ========== INTERVIEW ==========
+  Future<int> removeFromWishlist(String username, String jobId) async {
+    final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return 0;
+    
+    return await db.delete(
+      'wishlist',
+      where: 'user_id = ? AND job_id = ?',
+      whereArgs: [user['id'], jobId],
+    );
+  }
 
-  /// Tambah jadwal interview baru
+  Future<bool> isInWishlist(String username, String jobId) async {
+    final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return false;
+    
+    final result = await db.query(
+      'wishlist',
+      where: 'user_id = ? AND job_id = ?',
+      whereArgs: [user['id'], jobId],
+    );
+    return result.isNotEmpty;
+  }
+
+  Future<int> clearWishlist(String username) async {
+    final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return 0;
+    
+    return await db.delete(
+      'wishlist',
+      where: 'user_id = ?',
+      whereArgs: [user['id']],
+    );
+  }
+
+  // ========== INTERVIEW METHODS (DENGAN user_id) ==========
+
   Future<int> addInterview({
+    required String username,
     required String jobTitle,
     required String companyName,
     String? notes,
     required DateTime interviewDateTime,
   }) async {
     final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return 0;
+    
     return await db.insert('interviews', {
+      'user_id': user['id'],
       'job_title': jobTitle,
       'company_name': companyName,
       'notes': notes,
@@ -351,46 +491,57 @@ class DatabaseHelper {
     });
   }
 
-  /// Ambil semua jadwal, diurutkan dari yang paling dekat
-  Future<List<Map<String, dynamic>>> getAllInterviews() async {
+  Future<List<Map<String, dynamic>>> getAllInterviews(String username) async {
     final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return [];
+    
     return await db.query(
       'interviews',
+      where: 'user_id = ?',
+      whereArgs: [user['id']],
       orderBy: 'interview_date_time ASC',
     );
   }
 
-  /// Ambil jadwal yang akan datang (interview_date_time >= sekarang)
-  Future<List<Map<String, dynamic>>> getUpcomingInterviews() async {
+  Future<List<Map<String, dynamic>>> getUpcomingInterviews(String username) async {
     final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return [];
+    
     return await db.query(
       'interviews',
-      where: 'interview_date_time >= ?',
-      whereArgs: [DateTime.now().toIso8601String()],
+      where: 'user_id = ? AND interview_date_time >= ?',
+      whereArgs: [user['id'], DateTime.now().toIso8601String()],
       orderBy: 'interview_date_time ASC',
     );
   }
 
-  /// Ambil satu jadwal berdasarkan id
-  Future<Map<String, dynamic>?> getInterviewById(int id) async {
+  Future<Map<String, dynamic>?> getInterviewById(int id, String username) async {
     final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return null;
+    
     final res = await db.query(
       'interviews',
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'id = ? AND user_id = ?',
+      whereArgs: [id, user['id']],
     );
     return res.isNotEmpty ? res.first : null;
   }
 
-  /// Update jadwal interview
   Future<int> updateInterview({
     required int id,
+    required String username,
     required String jobTitle,
     required String companyName,
     String? notes,
     required DateTime interviewDateTime,
   }) async {
     final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return 0;
+    
     return await db.update(
       'interviews',
       {
@@ -399,90 +550,26 @@ class DatabaseHelper {
         'notes': notes,
         'interview_date_time': interviewDateTime.toIso8601String(),
       },
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'id = ? AND user_id = ?',
+      whereArgs: [id, user['id']],
     );
   }
 
-  /// Hapus jadwal interview
-  Future<int> deleteInterview(int id) async {
+  Future<int> deleteInterview(int id, String username) async {
     final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return 0;
+    
     return await db.delete(
       'interviews',
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'id = ? AND user_id = ?',
+      whereArgs: [id, user['id']],
     );
   }
 
-  // ========== SAVED COMPANY FAVORITES ==========
+  // ========== APPLIED JOBS METHODS ==========
 
-  Future<int> saveCompanyFavorite(
-    String username,
-    Map<String, dynamic> job,
-  ) async {
-    final db = await database;
-    final user = await getUserByUsername(username);
-    if (user == null) return 0;
-
-    final existing = await db.query(
-      'saved_company_favorites',
-      where: 'user_id = ? AND job_id = ?',
-      whereArgs: [user['id'], job['id']],
-    );
-    if (existing.isNotEmpty) return 0;
-
-    return await db.insert('saved_company_favorites', {
-      'user_id': user['id'],
-      'job_id': job['id'],
-      'job_title': job['title'],
-      'company_name': job['company'],
-      'location': job['location'],
-      'salary': job['salary'],
-      'saved_at': DateTime.now().toIso8601String(),
-    });
-  }
-
-  Future<List<Map<String, dynamic>>> getSavedCompanyFavorites(
-    String username,
-  ) async {
-    final db = await database;
-    final user = await getUserByUsername(username);
-    if (user == null) return [];
-    return await db.query(
-      'saved_company_favorites',
-      where: 'user_id = ?',
-      whereArgs: [user['id']],
-      orderBy: 'saved_at DESC',
-    );
-  }
-
-  Future<int> removeCompanyFavorite(String username, String jobId) async {
-    final db = await database;
-    final user = await getUserByUsername(username);
-    if (user == null) return 0;
-    return await db.delete(
-      'saved_company_favorites',
-      where: 'user_id = ? AND job_id = ?',
-      whereArgs: [user['id'], jobId],
-    );
-  }
-
-  Future<bool> isCompanyFavorite(String username, String jobId) async {
-    final db = await database;
-    final user = await getUserByUsername(username);
-    if (user == null) return false;
-    final result = await db.query(
-      'saved_company_favorites',
-      where: 'user_id = ? AND job_id = ?',
-      whereArgs: [user['id'], jobId],
-    );
-    return result.isNotEmpty;
-  }
-
-  // ========== APPLIED JOBS ==========
-
-  Future<void> saveAppliedJob(
-      String username, Map<String, dynamic> job) async {
+  Future<void> saveAppliedJob(String username, Map<String, dynamic> job) async {
     final db = await database;
     final user = await getUserByUsername(username);
     if (user == null) return;
@@ -490,13 +577,13 @@ class DatabaseHelper {
     final existing = await db.query(
       'applied_jobs',
       where: 'user_id = ? AND job_id = ?',
-      whereArgs: [user['id'], job['id']],
+      whereArgs: [user['id'], job['job_id']],
     );
     if (existing.isNotEmpty) return;
 
     await db.insert('applied_jobs', {
       'user_id': user['id'],
-      'job_id': job['id'],
+      'job_id': job['job_id'],
       'job_title': job['title'],
       'company': job['company'],
       'location': job['location'],
@@ -541,32 +628,64 @@ class DatabaseHelper {
     );
   }
 
-  // ========== WISHLIST ==========
+  // ========== SAVED COMPANY FAVORITES ==========
 
-  Future<int> addToWishlist(Map<String, dynamic> job) async {
+  Future<int> saveCompanyFavorite(String username, Map<String, dynamic> job) async {
     final db = await database;
-    return await db.insert(
-      'wishlist',
-      job,
-      conflictAlgorithm: ConflictAlgorithm.replace,
+    final user = await getUserByUsername(username);
+    if (user == null) return 0;
+
+    final existing = await db.query(
+      'saved_company_favorites',
+      where: 'user_id = ? AND job_id = ?',
+      whereArgs: [user['id'], job['id']],
+    );
+    if (existing.isNotEmpty) return 0;
+
+    return await db.insert('saved_company_favorites', {
+      'user_id': user['id'],
+      'job_id': job['id'],
+      'job_title': job['title'],
+      'company_name': job['company'],
+      'location': job['location'],
+      'salary': job['salary'],
+      'saved_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getSavedCompanyFavorites(String username) async {
+    final db = await database;
+    final user = await getUserByUsername(username);
+    if (user == null) return [];
+    return await db.query(
+      'saved_company_favorites',
+      where: 'user_id = ?',
+      whereArgs: [user['id']],
+      orderBy: 'saved_at DESC',
     );
   }
 
-  Future<List<Map<String, dynamic>>> getWishlist() async {
+  Future<int> removeCompanyFavorite(String username, String jobId) async {
     final db = await database;
-    return await db.query('wishlist', orderBy: 'added_at DESC');
+    final user = await getUserByUsername(username);
+    if (user == null) return 0;
+    return await db.delete(
+      'saved_company_favorites',
+      where: 'user_id = ? AND job_id = ?',
+      whereArgs: [user['id'], jobId],
+    );
   }
 
-  Future<int> removeFromWishlist(String jobId) async {
+  Future<bool> isCompanyFavorite(String username, String jobId) async {
     final db = await database;
-    return await db.delete('wishlist', where: 'id = ?', whereArgs: [jobId]);
-  }
-
-  Future<bool> isInWishlist(String jobId) async {
-    final db = await database;
-    final res =
-        await db.query('wishlist', where: 'id = ?', whereArgs: [jobId]);
-    return res.isNotEmpty;
+    final user = await getUserByUsername(username);
+    if (user == null) return false;
+    final result = await db.query(
+      'saved_company_favorites',
+      where: 'user_id = ? AND job_id = ?',
+      whereArgs: [user['id'], jobId],
+    );
+    return result.isNotEmpty;
   }
 
   // ========== UTILITY ==========
