@@ -212,16 +212,10 @@ class DatabaseHelper {
       }
     }
 
-    // ============================================
-    // MIGRASI VERSI 7: TAMBAHKAN user_id KE wishlist DAN interviews
-    // ============================================
     if (oldVersion < 7) {
       try {
         debugPrint('Running migration to version 7: Add user_id to wishlist and interviews');
         
-        // -----------------------------------------------------------------
-        // 1. PERBAIKI TABEL WISHLIST
-        // -----------------------------------------------------------------
         await db.execute('''
           CREATE TABLE wishlist_new (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -251,9 +245,6 @@ class DatabaseHelper {
         await db.execute('DROP TABLE wishlist');
         await db.execute('ALTER TABLE wishlist_new RENAME TO wishlist');
         
-        // -----------------------------------------------------------------
-        // 2. PERBAIKI TABEL INTERVIEWS
-        // -----------------------------------------------------------------
         await db.execute('''
           CREATE TABLE interviews_new (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -290,10 +281,9 @@ class DatabaseHelper {
   String _hashPassword(String password) {
     var bytes = utf8.encode(password);
     return sha256.convert(bytes).toString();
+
   }
-
-  // ========== USER AUTH ==========
-
+// user auth
   Future<int> registerUser(String username, String password) async {
     final db = await database;
     final existing = await db.query(
@@ -336,7 +326,7 @@ class DatabaseHelper {
     return res.isNotEmpty ? res.first : null;
   }
 
-  // ========== PROFILE METHODS ==========
+// user profile update 
 
   static const Object _sentinel = Object();
 
@@ -391,7 +381,7 @@ class DatabaseHelper {
     );
   }
 
-  // ========== WISHLIST METHODS (DENGAN user_id) ==========
+// WISHLIST METHODS (DENGAN user_id)
 
   Future<int> addToWishlist(String username, Map<String, dynamic> job) async {
     final db = await database;
@@ -468,7 +458,7 @@ class DatabaseHelper {
     );
   }
 
-  // ========== INTERVIEW METHODS (DENGAN user_id) ==========
+// INTERVIEW METHODS (DENGAN user_id)
 
   Future<int> addInterview({
     required String username,
@@ -567,7 +557,7 @@ class DatabaseHelper {
     );
   }
 
-  // ========== APPLIED JOBS METHODS ==========
+// APPLIED JOBS METHODS (DENGAN user_id)
 
   Future<void> saveAppliedJob(String username, Map<String, dynamic> job) async {
     final db = await database;
@@ -628,7 +618,7 @@ class DatabaseHelper {
     );
   }
 
-  // ========== SAVED COMPANY FAVORITES ==========
+// COMPANY FAVORITES METHODS (DENGAN user_id)
 
   Future<int> saveCompanyFavorite(String username, Map<String, dynamic> job) async {
     final db = await database;
@@ -688,7 +678,7 @@ class DatabaseHelper {
     return result.isNotEmpty;
   }
 
-  // ========== UTILITY ==========
+// CLEAR ALL DATA (UNTUK TESTING)
 
   Future<void> clearAllData() async {
     final db = await database;

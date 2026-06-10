@@ -1,11 +1,9 @@
-// lib/data/services/api_timezone_service.dart
-
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/constants/api_keys.dart';
 
-// ─── MODEL CLASSES ───────────────────────────────────────────────────────────
+//model untuk hasil timezone
 
 class TimezoneResult {
   final String timezone;
@@ -92,12 +90,12 @@ class _TZCacheEntry {
   _TZCacheEntry({required this.result, required this.timestamp});
 }
 
-// ─── DATA FALLBACK STATIS ────────────────────────────────────────────────────
+// Fallback statis untuk timezone offset jika API gagal
 
 const Map<String, int> _staticOffsets = {
-  'Asia/Jakarta':        420,   // UTC+7
-  'Asia/Makassar':       480,   // UTC+8
-  'Asia/Jayapura':       540,   // UTC+9
+  'Asia/Jakarta':        420,   
+  'Asia/Makassar':       480,   
+  'Asia/Jayapura':       540,   
   'Europe/London':       0,     
   'Asia/Singapore':      480,
   'Asia/Kuala_Lumpur':   480,
@@ -136,10 +134,10 @@ const Map<String, int> _staticOffsets = {
   'Africa/Johannesburg': 120,
 };
 
-// ─── SERVICE ─────────────────────────────────────────────────────────────────
+// Service utama untuk mengambil data timezone dari API RapidAPI
 
 class ApiTimezoneService {
-  // Base URL diubah ke endpoint timezone RapidAPI
+
   static const String _baseUrl = 'https://world-time-api3.p.rapidapi.com/timezone/';
   
   static final Map<String, _TZCacheEntry> _cache = {};
@@ -158,8 +156,6 @@ class ApiTimezoneService {
   Future<TimezoneResult> _fetchFromRapidApi(String tz) async {
     try {
       final url = Uri.parse('$_baseUrl$tz');
-      
-      // Mengirimkan request dengan Header autentikasi dari RapidAPI Anda
       final response = await http.get(
         url, 
         headers: {
@@ -171,8 +167,7 @@ class ApiTimezoneService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
-        
-        // Mengambil string offset (contoh: "+07:00")
+      
         final offsetStr = data['utc_offset'] as String? ?? '+00:00';
         final offset = _parseOffsetString(offsetStr) ?? 0;
 

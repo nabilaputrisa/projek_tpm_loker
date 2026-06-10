@@ -1,5 +1,3 @@
-// lib/views/profile/applied_job_detail_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/database_helper.dart';

@@ -1,5 +1,3 @@
-// lib/views/profile/applied_jobs_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/database/database_helper.dart';
@@ -167,7 +165,7 @@ class _AppliedJobsPageState extends State<AppliedJobsPage> {
                                 appliedJob: job,
                               ),
                             ),
-                          ).then((_) => _loadAppliedJobs()); // Refresh setelah kembali
+                          ).then((_) => _loadAppliedJobs()); 
                         },
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 12),

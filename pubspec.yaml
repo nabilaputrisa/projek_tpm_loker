@@ -27,14 +27,13 @@ dependencies:
 
   # Sensors & Magnetometer 
   flutter_compass: ^0.8.1    # Magnetometer 
-  sensors_plus: ^5.0.1       # Accelerometer & Gyroscope
+  sensors_plus: ^5.0.1       # Accelerometer & Gyroscope (UNTUK DETEKSI GOYANGAN)
   light: ^5.0.0              # Sensor Cahaya (Auto Dark Mode)
 
   # LBS & Maps 
   google_maps_flutter: ^2.17.0 # Google Maps
   geolocator: ^12.0.0        # GPS (LBS)
   permission_handler: ^11.3.1
-
 
   # Notifikasi & Waktu 
   flutter_local_notifications: ^17.1.2 # Alarm notifikasi
@@ -46,13 +45,11 @@ dependencies:
   json_annotation: ^4.11.0
   json_serializable: ^6.13.2
   path_provider: ^2.1.5
-  #open_file: ^3.5.11
   file_picker: ^11.0.2
   url_launcher: ^6.3.2
   image_picker: ^1.2.2
   open_filex: ^4.7.0
   flutter_timezone: ^5.1.0
-
 
 dev_dependencies:
   flutter_test:

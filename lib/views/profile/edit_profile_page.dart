@@ -53,14 +53,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     'Admin Jobs',
   ];
 
-  // ── Warna tema ──────────────────────────────────────────────
+  // Warna tema 
   static const Color _primary    = Color(0xFF5C7EA8);
   static const Color _accent     = Color(0xFF7FA3C8);
   static const Color _cardBg     = Color(0xFFFFFFFF);
   static const Color _scaffoldBg = Color(0xFFEEF1F5);
   static const Color _textPrimary   = Color(0xFF1A2B3C);
   static const Color _textSecondary = Color(0xFF6B7C8D);
-  // ────────────────────────────────────────────────────────────
+
 
   @override
   void initState() {

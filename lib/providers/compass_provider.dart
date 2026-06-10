@@ -1,8 +1,3 @@
-// lib/providers/compass_provider.dart
-//
-// Mengelola stream magnetometer dari flutter_compass.
-// Expose heading (derajat 0–360) sebagai ChangeNotifier.
-
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_compass/flutter_compass.dart';
@@ -50,7 +45,7 @@ class CompassProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Berhenti mendengarkan sensor (hemat baterai saat widget tidak terpakai).
+//berhenti mendengarkan sensor magnetometer,hemat
   void stopListening() {
     _subscription?.cancel();
     _subscription = null;

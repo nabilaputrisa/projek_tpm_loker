@@ -1,22 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-/// Service untuk mengambil data kurs mata uang real-time.
-/// Menggunakan exchangerate-api.com (free tier, tidak perlu API key).
-/// Endpoint: https://api.exchangerate-api.com/v4/latest/{BASE}
 class ApiKursService {
   static const String _baseUrl = 'https://api.exchangerate-api.com/v4/latest';
 
-  // Cache sederhana agar tidak terlalu sering hit API
   static Map<String, _CacheEntry> _cache = {};
   static const Duration _cacheDuration = Duration(minutes: 10);
 
-  /// Ambil semua nilai tukar dari [baseCurrency].
-  /// Return map: { 'USD': 1.0, 'IDR': 15800.0, ... }
+  /// Ambil kurs mata uang terhadap [baseCurrency].
   Future<Map<String, double>> fetchRates(String baseCurrency) async {
     final cacheKey = baseCurrency.toUpperCase();
 
-    // Kembalikan dari cache jika masih valid
     if (_cache.containsKey(cacheKey)) {
       final entry = _cache[cacheKey]!;
       if (DateTime.now().difference(entry.timestamp) < _cacheDuration) {
@@ -42,15 +36,13 @@ class ApiKursService {
     }
   }
 
-  /// Ambil daftar semua kode mata uang yang tersedia (dari hasil fetch USD).
-  /// Berguna untuk mengisi dropdown "pilih mata uang".
   Future<List<String>> fetchAvailableCurrencies() async {
     final rates = await fetchRates('USD');
     final codes = rates.keys.toList()..sort();
     return codes;
   }
 
-  /// Konversi [amount] dari [from] ke [to].
+// Konversi mata uang
   Future<ConversionResult> convert({
     required double amount,
     required String from,
@@ -76,7 +68,7 @@ class _CacheEntry {
   _CacheEntry({required this.rates, required this.timestamp});
 }
 
-/// Model hasil konversi (bisa juga diletakkan di currency_model.dart)
+// Model untuk hasil konversi mata uang
 class ConversionResult {
   final double amount;
   final String from;

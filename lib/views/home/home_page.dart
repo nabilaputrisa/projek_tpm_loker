@@ -1,5 +1,3 @@
-// lib/views/home/home_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +12,6 @@ import '../profile/profile_page.dart';
 import '../profile/saved_jobs_page.dart';
 import '../interview/interview_page.dart';
 
-// ─── Main Navigation Shell ────────────────────────────────────────────────────
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
 
@@ -106,7 +103,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   }
 }
 
-// ─── Nav Item Widget ──────────────────────────────────────────────────────────
 class _NavItem extends StatelessWidget {
   final int index;
   final int currentIndex;
@@ -167,7 +163,6 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-// ─── Home Tab ─────────────────────────────────────────────────────────────────
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 

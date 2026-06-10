@@ -34,7 +34,7 @@ class JobModel {
     required String salaryDisplay,
   });
 
-  // ─── Factory: Parse dari JSON Adzuna API ───────────────────────────────────
+// fromJson (dari API Adzuna) 
   factory JobModel.fromJson(
     Map<String, dynamic> json, {
     String? currencySymbol,
@@ -60,8 +60,7 @@ class JobModel {
     );
   }
 
-  // ─── Getter: Currency Code ─────────────────────────────────────────────────
-  // Prioritas: dari currencySymbol → fallback dari lokasi → fallback USD
+// Getter: Currency code deteksi dari symbol atau lokasi
   String get currencyCode {
     final fromSymbol = _currencyCodeFromSymbol(currencySymbol);
     if (fromSymbol != null) return fromSymbol;
@@ -72,7 +71,7 @@ class JobModel {
     return 'USD';
   }
 
-  /// Map symbol → currency code (hanya 7 negara yang di-support Adzuna)
+// Deteksi currency code dari symbol (hanya beberapa simbol umum)
   String? _currencyCodeFromSymbol(String symbol) {
     const map = {
       'S\$': 'SGD', // Singapore
@@ -81,7 +80,7 @@ class JobModel {
       'A\$': 'AUD', // Australia
       'C\$': 'CAD', // Canada
       '€':   'EUR', // Germany
-      '\$':  'USD', // US — paling akhir karena paling ambigu
+      '\$':  'USD', // US 
     };
     return map[symbol];
   }
@@ -97,7 +96,7 @@ class JobModel {
     return null;
   }
 
-  /// Keyword lokasi → currency code (hanya 7 negara: sg, in, gb, au, us, ca, de)
+// Map lokasi ke currency code untuk deteksi berdasarkan lokasi
   static const Map<String, String> _locationCurrencyMap = {
     // Singapore
     'singapore': 'SGD',
@@ -139,7 +138,7 @@ class JobModel {
     'leipzig': 'EUR',
   };
 
-  // ─── Format angka dengan currency symbol ──────────────────────────────────
+  // Format angka dengan currency symbol 
   String _formatSalary(double value) {
     if (currencySymbol == '₹' && value >= 100000) {
       final lakh = value / 100000;
@@ -149,7 +148,7 @@ class JobModel {
     return '$currencySymbol${formatter.format(value.toInt())}';
   }
 
-  // ─── Getter: Salary display ────────────────────────────────────────────────
+  // Getter: Salary display 
   String get salaryDisplay {
     if (salaryMin != null && salaryMax != null) {
       return '${_formatSalary(salaryMin!)} – ${_formatSalary(salaryMax!)} / year';
@@ -161,10 +160,10 @@ class JobModel {
     return 'Salary not specified';
   }
 
-  // ─── Getter: Apakah salary tersedia ───────────────────────────────────────
+  // Getter: Apakah salary tersedia 
   bool get hasSalary => salaryMin != null || salaryMax != null;
 
-  // ─── Getter: Time ago ─────────────────────────────────────────────────────
+  // Getter: Time ago 
   String get timeAgo {
     if (createdAt == null) return 'Unknown date';
     final diff = DateTime.now().difference(createdAt!);
@@ -175,7 +174,7 @@ class JobModel {
     return 'Just now';
   }
 
-  // ─── Getter: Contract type display ────────────────────────────────────────
+  // Getter: Contract type display 
   String get contractTypeDisplay {
     if (contractType == null || contractType!.isEmpty) return 'Not specified';
     return contractType!
@@ -185,7 +184,7 @@ class JobModel {
         .join(' ');
   }
 
-  // ─── toMap ────────────────────────────────────────────────────────────────
+  // toMap 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -205,7 +204,7 @@ class JobModel {
     };
   }
 
-  // ─── fromMap ──────────────────────────────────────────────────────────────
+  // fromMap
   factory JobModel.fromMap(Map<String, dynamic> map) {
     return JobModel(
       id: map['id'] ?? '',
@@ -228,7 +227,7 @@ class JobModel {
     );
   }
 
-  // ─── copyWith ─────────────────────────────────────────────────────────────
+  // copyWith 
   JobModel copyWith({
     String? id,
     String? title,

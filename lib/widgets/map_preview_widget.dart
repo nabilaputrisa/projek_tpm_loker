@@ -9,9 +9,6 @@ import 'package:geolocator/geolocator.dart';
 import '../data/services/location_service.dart';
 import 'compass_pointer.dart';
 
-// ============================================
-// HELPER: Menghitung jarak antara 2 titik
-// ============================================
 class DistanceHelper {
   static double calculateDistance(LatLng point1, LatLng point2) {
     const double R = 6371;
@@ -57,9 +54,7 @@ class _HeadingSmoother {
   }
 }
 
-// ============================================
-// MAIN WIDGET
-// ============================================
+
 class MapPreviewWidget extends StatefulWidget {
   final double lat;
   final double lng;
@@ -233,9 +228,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
     }
   }
 
-  // ============================================
-  // ZOOM KE LEVEL NEGARA (🌍)
-  // ============================================
+
   void _zoomToCountryLevel() {
     if (_mapController == null) return;
     _currentZoom = 5;
@@ -329,9 +322,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
       height: 320,
       child: Stack(
         children: [
-          // ========================================
-          // GOOGLE MAP
-          // ========================================
+
           GoogleMap(
             initialCameraPosition: CameraPosition(
               target: LatLng(widget.lat, widget.lng),
@@ -374,9 +365,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
             },
           ),
           
-          // ========================================
-          // TOP LEFT - COMPASS BADGE
-          // ========================================
+
           if (_compassAvailable)
             Positioned(
               top: 12,
@@ -389,9 +378,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
               ),
             ),
           
-          // ========================================
-          // TOP RIGHT - RESET KE KANTOR
-          // ========================================
+
           Positioned(
             top: 12,
             right: 12,
@@ -401,9 +388,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
             ),
           ),
           
-          // ========================================
-          // BOTTOM RIGHT - LOKASI SAYA
-          // ========================================
+
           Positioned(
             bottom: 12,
             right: 12,
@@ -414,9 +399,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
             ),
           ),
           
-          // ========================================
-          // BOTTOM LEFT - ZOOM KE NEGARA (🌍)
-          // ========================================
+
           Positioned(
             bottom: 12,
             left: 12,
@@ -426,9 +409,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
             ),
           ),
           
-          // ========================================
-          // BOTTOM INDICATOR - COMPASS MODE ACTIVE
-          // ========================================
+
           if (_compassMode && _compassAvailable)
             Positioned(
               bottom: 12,
@@ -456,9 +437,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
               ),
             ),
           
-          // ========================================
-          // SENSOR UNAVAILABLE
-          // ========================================
+
           if (!_compassAvailable)
             Positioned(
               top: 12,
@@ -471,9 +450,7 @@ class _MapPreviewWidgetState extends State<MapPreviewWidget> {
   }
 }
 
-// ============================================
-// COMPASS BADGE
-// ============================================
+
 class _CompassBadge extends StatelessWidget {
   final double heading;
   final ColorScheme colorScheme;
@@ -523,9 +500,7 @@ class _CompassBadge extends StatelessWidget {
   }
 }
 
-// ============================================
-// ZOOM TO COUNTRY BUTTON (🌍)
-// ============================================
+
 class _ZoomToCountryButton extends StatelessWidget {
   final VoidCallback onTap;
   final ColorScheme colorScheme;
@@ -556,9 +531,7 @@ class _ZoomToCountryButton extends StatelessWidget {
   }
 }
 
-// ============================================
-// RESET BUTTON (Ke Kantor)
-// ============================================
+
 class _ResetButton extends StatelessWidget {
   final VoidCallback onTap;
   final ColorScheme colorScheme;
@@ -581,9 +554,7 @@ class _ResetButton extends StatelessWidget {
   }
 }
 
-// ============================================
-// MY LOCATION BUTTON
-// ============================================
+
 class _MyLocationButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
@@ -610,9 +581,7 @@ class _MyLocationButton extends StatelessWidget {
   }
 }
 
-// ============================================
-// SENSOR UNAVAILABLE BADGE
-// ============================================
+
 class _SensorUnavailableBadge extends StatelessWidget {
   final ColorScheme colorScheme;
   const _SensorUnavailableBadge({required this.colorScheme});

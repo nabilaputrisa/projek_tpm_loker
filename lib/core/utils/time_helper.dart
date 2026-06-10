@@ -1,9 +1,7 @@
-// lib/core/utils/time_helper.dart
-
 class TimeHelper {
 
   static const Map<String, String> _locationToTz = {
-    // Indonesia (untuk deteksi, bukan slot dinamis)
+    // Indonesia untuk deteksi, bukan slot dinamis
     'jakarta':        'Asia/Jakarta',
     'bandung':        'Asia/Jakarta',
     'surabaya':       'Asia/Jakarta',

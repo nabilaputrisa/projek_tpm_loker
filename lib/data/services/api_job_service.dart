@@ -8,7 +8,7 @@ class ApiJobService {
   static const String _appKey = ApiKeys.adzunaAppKey;
   static const String _baseUrl = 'https://api.adzuna.com/v1/api/jobs';
 
-  // ─── Country Config ────────────────────────────────────────────────────────
+  // Country Config 
   static const Map<String, CountryConfig> countries = {
     'sg': CountryConfig(name: 'Singapore', currency: 'SGD', currencySymbol: 'S\$', flag: '🇸🇬'),
     'in': CountryConfig(name: 'India', currency: 'INR', currencySymbol: '₹', flag: '🇮🇳'),
@@ -19,7 +19,7 @@ class ApiJobService {
     'de': CountryConfig(name: 'Germany', currency: 'EUR', currencySymbol: '€', flag: '🇩🇪'),
   };
 
-  // ─── Locations per Country ─────────────────────────────────────────────────
+  // Locations per Country 
   static const Map<String, List<String>> _locationsByCountry = {
     'sg': ['Central Region', 'East Region', 'North Region', 'North-East Region', 'West Region'],
     'in': ['Bangalore', 'Mumbai', 'Delhi', 'Hyderabad', 'Chennai', 'Pune', 'Kolkata', 'Ahmedabad', 'Noida', 'Gurgaon'],
@@ -30,7 +30,7 @@ class ApiJobService {
     'de': ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Cologne', 'Stuttgart', 'Düsseldorf', 'Leipzig'],
   };
 
-  // ─── Fetch Jobs From Adzuna API ────────────────────────────────────────────
+  // Fetch Jobs From Adzuna API 
   Future<Map<String, dynamic>> fetchJobs({
     String countryCode = 'sg',
     String? query,

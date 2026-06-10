@@ -1,5 +1,3 @@
-// lib/data/services/gemini_service.dart
-
 import 'dart:async';
 import 'dart:convert';
 
@@ -52,23 +50,11 @@ Panduan:
 
   final List<ChatMessage> _history = [];
 
-  // ─────────────────────────────────────────────
-  // RATE LIMIT CONFIG
-  // ─────────────────────────────────────────────
-
   DateTime? _lastRequestTime;
-
-  // Delay minimal antar request
   static const int _minIntervalMs = 8000;
-
-  // Retry cukup 1x saja
   static const int _maxRetries = 1;
 
   List<ChatMessage> get history => List.unmodifiable(_history);
-
-  // ─────────────────────────────────────────────
-  // SEND MESSAGE
-  // ─────────────────────────────────────────────
 
   Future<String> sendMessage(String userMessage) async {
     final trimmed = userMessage.trim();
@@ -77,10 +63,8 @@ Panduan:
       throw Exception('Pesan kosong.');
     }
 
-    // throttle supaya tidak spam request
     await _throttle();
 
-    // simpan pesan user
     _history.add(
       ChatMessage(
         role: 'user',
@@ -124,10 +108,6 @@ Panduan:
 
     throw Exception('Gagal mengirim pesan.');
   }
-
-  // ─────────────────────────────────────────────
-  // THROTTLE
-  // ─────────────────────────────────────────────
 
   Future<void> _throttle() async {
     if (_lastRequestTime != null) {
@@ -262,18 +242,14 @@ Panduan:
     }
   }
 
-  // ─────────────────────────────────────────────
-  // RESET CHAT
-  // ─────────────────────────────────────────────
+
 
   void resetConversation() {
     _history.clear();
     _lastRequestTime = null;
   }
 
-  // ─────────────────────────────────────────────
-  // QUICK PROMPTS
-  // ─────────────────────────────────────────────
+
 
   static List<String> getQuickPrompts() {
     return [
@@ -285,9 +261,7 @@ Panduan:
   }
 }
 
-// ─────────────────────────────────────────────
-// EXTENSION
-// ─────────────────────────────────────────────
+
 
 extension TakeLastExtension<E> on List<E> {
   List<E> takeLast(int n) {
@@ -296,8 +270,5 @@ extension TakeLastExtension<E> on List<E> {
   }
 }
 
-// ─────────────────────────────────────────────
-// RATE LIMIT EXCEPTION
-// ─────────────────────────────────────────────
 
 class _RateLimitException implements Exception {}

@@ -1,5 +1,3 @@
-// lib/views/home/job_detail_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:projektpm/data/services/notification_service.dart';
 import 'package:readmore/readmore.dart';
@@ -54,7 +52,7 @@ class JobDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Sliver App Bar ─────────────────────────────────────────────────────────
+
   Widget _buildSliverAppBar(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     
@@ -65,7 +63,7 @@ class JobDetailPage extends StatelessWidget {
       iconTheme: IconThemeData(color: cs.onPrimary),
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          color: cs.primary, // Warna solid, tanpa gradasi
+          color: cs.primary, 
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 80, 20, 20),
             child: Column(
@@ -105,7 +103,7 @@ class JobDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Company Card ───────────────────────────────────────────────────────────
+
   Widget _buildCompanyCard(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     
@@ -144,7 +142,6 @@ class JobDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Info Grid ──────────────────────────────────────────────────────────────
   Widget _buildInfoGrid(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     
@@ -169,7 +166,6 @@ class JobDetailPage extends StatelessWidget {
     ]);
   }
 
-  // ── Salary Card ────────────────────────────────────────────────────────────
   Widget _buildSalaryCard(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     
@@ -220,7 +216,7 @@ class JobDetailPage extends StatelessWidget {
             ),
         ]),
         const SizedBox(height: 14),
-        // ── Dua tombol konversi ────────────────────────────────────────
+
         Row(children: [
           Expanded(
             child: _OutlineButton(
@@ -244,7 +240,6 @@ class JobDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Description Card ───────────────────────────────────────────────────────
   Widget _buildDescriptionCard(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     
@@ -279,7 +274,7 @@ class JobDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Location Card ──────────────────────────────────────────────────────────
+
   Widget _buildLocationCard(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     
@@ -313,7 +308,7 @@ class JobDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Apply Button ───────────────────────────────────────────────────────────
+
   Widget _buildApplyButton(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     
@@ -326,7 +321,7 @@ class JobDetailPage extends StatelessWidget {
           width: MediaQuery.of(context).size.width * 0.9,
           height: 56,
           decoration: BoxDecoration(
-            color: hasApplied ? cs.onSurfaceVariant : cs.primary, // Warna solid
+            color: hasApplied ? cs.onSurfaceVariant : cs.primary, 
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -361,7 +356,7 @@ class JobDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Apply Logic ────────────────────────────────────────────────────────────
+
   Future<bool> _hasApplied() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -529,7 +524,7 @@ class JobDetailPage extends StatelessWidget {
     );
   }
 
-  // ── Bottom sheet triggers ──────────────────────────────────────────────────
+/// Dua fungsi untuk menampilkan bottom sheet konversi
 
   void _showCurrencySheet(BuildContext context) {
     showModalBottomSheet(
@@ -553,9 +548,7 @@ class JobDetailPage extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// REUSABLE WIDGETS
-// ═══════════════════════════════════════════════════════════════════════════
+//reusable widgets
 
 class _OutlineButton extends StatelessWidget {
   final IconData icon;

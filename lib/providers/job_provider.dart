@@ -4,7 +4,7 @@ import '../data/models/job_model.dart';
 import '../data/services/api_job_service.dart';
 import '../data/database/database_helper.dart';
 
-// ─── MODEL SALARY RANGE ───────────────────────────────────────────────────────
+// Model untuk rentang gaji yang digunakan dalam filter
 class SalaryRange {
   final double min;
   final double? max;
@@ -17,7 +17,7 @@ class SalaryRange {
   });
 }
 
-// ─── JOB PROVIDER ────────────────────────────────────────────────────────────
+// Provider utama untuk mengelola data pekerjaan, pencarian, filter, dan wishlist
 class JobProvider with ChangeNotifier {
   final ApiJobService _apiService = ApiJobService();
   final DatabaseHelper _dbHelper = DatabaseHelper();
@@ -56,10 +56,7 @@ class JobProvider with ChangeNotifier {
   String get selectedCountry => _selectedCountry;
   SalaryRange? get selectedSalaryRange => _selectedSalaryRange;
 
-  // ============================================
-  // JOBS API
-  // ============================================
-
+// Fetch pekerjaan dari API dengan parameter pencarian dan filter yang diterapkan
   Future<void> fetchJobs({bool refresh = false}) async {
     if (refresh) {
       _currentPage = 1;
@@ -195,10 +192,7 @@ class JobProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // ============================================
-  // WISHLIST METHODS (DENGAN user_id)
-  // ============================================
-
+// Wishlist management
   Future<String?> _getCurrentUsername() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('logged_username');

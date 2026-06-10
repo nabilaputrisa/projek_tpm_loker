@@ -1,5 +1,3 @@
-// lib/views/tools/ai_consultant_page.dart
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -172,9 +170,7 @@ class _AiConsultantPageState extends State<AiConsultantPage>
     );
   }
 
-  // ============================================
-  // APP BAR
-  // ============================================
+ 
   PreferredSizeWidget _buildAppBar(ColorScheme cs, bool hasMessages) {
     return AppBar(
       backgroundColor: cs.surface,
@@ -230,9 +226,7 @@ class _AiConsultantPageState extends State<AiConsultantPage>
     );
   }
 
-  // ============================================
-  // WELCOME BANNER
-  // ============================================
+
   Widget _buildWelcomeBanner(ColorScheme cs) {
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 14, 16, 0),
@@ -269,9 +263,7 @@ class _AiConsultantPageState extends State<AiConsultantPage>
     );
   }
 
-  // ============================================
-  // QUICK PROMPTS
-  // ============================================
+
   Widget _buildQuickPromptsView(ColorScheme cs) {
     final prompts = GeminiService.getQuickPrompts();
     return ListView(
@@ -288,9 +280,7 @@ class _AiConsultantPageState extends State<AiConsultantPage>
     );
   }
 
-  // ============================================
-  // CHAT LIST
-  // ============================================
+
   Widget _buildChatList(ColorScheme cs, List<ChatMessage> messages) {
     return ListView.builder(
       controller: _scrollController,
@@ -346,9 +336,7 @@ class _AiConsultantPageState extends State<AiConsultantPage>
     );
   }
 
-  // ============================================
-  // COOLDOWN BANNER
-  // ============================================
+
   Widget _buildCooldownBanner(ColorScheme cs) {
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 0, 14, 6),
@@ -381,9 +369,7 @@ class _AiConsultantPageState extends State<AiConsultantPage>
     );
   }
 
-  // ============================================
-  // INPUT AREA
-  // ============================================
+
   Widget _buildInputArea(ColorScheme cs) {
     return Container(
       color: cs.surface,
@@ -487,9 +473,7 @@ class _AiConsultantPageState extends State<AiConsultantPage>
   }
 }
 
-// ============================================
-// CHAT BUBBLE WIDGET
-// ============================================
+
 class _ChatBubble extends StatefulWidget {
   final ChatMessage message;
   final VoidCallback onCopy;

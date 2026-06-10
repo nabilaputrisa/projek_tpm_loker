@@ -1,5 +1,3 @@
-// lib/services/notification_service.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -38,17 +36,7 @@ class NotificationService {
         ?.requestNotificationsPermission();
   }
 
-  // ========== INTERVIEW NOTIFICATIONS ==========
-  
-  // Jadwalkan 3 notifikasi sekaligus untuk satu jadwal interview:
-  // 1. H-1 hari  → notif penyemangat
-  // 2. H-1 jam   → notif siap-siap
-  // 3. Tepat waktu → notif "Saatnya interview!"
-  //
-  // ID yang dipakai:
-  //   H-1 hari  : id * 10 + 1
-  //   H-1 jam   : id * 10 + 2
-  //   Tepat jam : id * 10 + 3
+// interview notifications
   Future<void> scheduleInterviewNotification({
     required int id,
     required String jobTitle,
@@ -134,7 +122,7 @@ class NotificationService {
     await _plugin.cancelAll();
   }
 
-  // ========== JOB APPLICATION NOTIFICATIONS ==========
+
   
   // Notifikasi instan untuk lamaran pekerjaan berhasil
   Future<void> showJobAppliedNotification({

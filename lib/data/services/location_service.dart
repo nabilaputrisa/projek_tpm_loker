@@ -1,15 +1,10 @@
-// lib/data/services/location_service.dart
-//
-// Mengelola permintaan izin GPS dan pengambilan posisi user saat ini.
-// Dependensi: geolocator
-
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
-  /// Minta izin lokasi jika belum diberikan, lalu kembalikan posisi saat ini.
-  /// Melempar [LocationException] jika izin ditolak atau layanan nonaktif.
+
+// Mendapatkan posisi saat ini dengan pengecekan izin dan layanan lokasi
   Future<Position> getCurrentPosition() async {
-    // 1. Cek apakah layanan lokasi aktif di perangkat
+    // 1. Cek apakah layanan lokasi aktif
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       throw LocationException(
@@ -42,16 +37,16 @@ class LocationService {
     );
   }
 
-  /// Stream posisi real-time (opsional, untuk tracking).
+// Stream posisi untuk update real-time 
   Stream<Position> get positionStream => Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
-          distanceFilter: 10, // update tiap 10 meter
+          distanceFilter: 10, 
         ),
       );
 }
 
-/// Exception khusus untuk error lokasi agar mudah ditangkap di UI.
+/// Exception khusus untuk error lokasi agar mudah ditangkap di UI
 class LocationException implements Exception {
   final String message;
   const LocationException(this.message);

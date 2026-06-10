@@ -114,14 +114,14 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
       ),
       body: Consumer<JobProvider>(
         builder: (context, provider, _) {
-          // ── Loading ─────────────────────────────────────────────
+        //loading state
           if (provider.isLoading) {
             return Center(
               child: CircularProgressIndicator(color: cs.primary),
             );
           }
 
-          // ── Empty State ─────────────────────────────────────────
+   //statement untuk kondisi ketika tidak ada lowongan tersimpan
           if (provider.wishlist.isEmpty) {
             return Center(
               child: Column(
@@ -178,7 +178,7 @@ class _SavedJobsPageState extends State<SavedJobsPage> {
             );
           }
 
-          // ── Wishlist List ───────────────────────────────────────
+         // Kondisi ketika ada lowongan tersimpan
           return Column(
             children: [
               // Header count
