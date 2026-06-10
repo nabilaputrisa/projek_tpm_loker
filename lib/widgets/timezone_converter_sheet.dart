@@ -1,5 +1,3 @@
-// lib/widgets/timezone_converter_sheet.dart
-
 import 'package:flutter/material.dart';
 import '../../data/services/api_timezone_service.dart';
 import '../../core/utils/time_helper.dart';
@@ -67,15 +65,11 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
       _result = null;
     });
 
-    // JIKA TIMEOZONE SAMA: Langsung render tanpa nunggu API/Statis crash/gantung
     if (_sourceTz == _targetTz) {
       final currentLabel = TimeHelper.labelFromTz(_sourceTz);
       setState(() {
         _result = TimezoneConversionResult(
-          sourceTime: TimeOfDaySimple(
-            hour: _selectedTime.hour,
-            minute: _selectedTime.minute,
-          ),
+          sourceTime: TimeOfDaySimple(hour: _selectedTime.hour, minute: _selectedTime.minute),
           fromTimezone: _sourceTz,
           toTimezone: _targetTz,
           fromOffset: currentLabel,
@@ -93,10 +87,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
 
     try {
       final result = await _service.convert(
-        sourceTime: TimeOfDaySimple(
-          hour: _selectedTime.hour,
-          minute: _selectedTime.minute,
-        ),
+        sourceTime: TimeOfDaySimple(hour: _selectedTime.hour, minute: _selectedTime.minute),
         fromTimezone: _sourceTz,
         toTimezone: _targetTz,
       );
@@ -141,10 +132,9 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
     _convert();
   }
 
-  void _openForeignPicker() {
+  void _openForeignPicker(BuildContext context, ColorScheme cs, bool isSource) {
     final searchController = TextEditingController();
     List<Map<String, String>> filtered = List.from(TimeHelper.foreignTimezones);
-    final cs = Theme.of(context).colorScheme;
 
     showModalBottomSheet(
       context: context,
@@ -183,13 +173,14 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
               child: TextField(
                 controller: searchController,
                 autofocus: true,
+                style: TextStyle(color: cs.onSurface),
                 decoration: InputDecoration(
                   hintText: 'Cari kota atau zona waktu...',
-                  hintStyle: TextStyle(fontSize: 13, color: cs.onSurfaceVariant.withOpacity(0.7)),
-                  prefixIcon: Icon(Icons.search_rounded, color: cs.secondary, size: 20),
+                  hintStyle: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                  prefixIcon: Icon(Icons.search_rounded, color: cs.primary, size: 20),
                   suffixIcon: searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear_rounded, size: 18),
+                          icon: Icon(Icons.clear_rounded, size: 18, color: cs.onSurfaceVariant),
                           onPressed: () {
                             searchController.clear();
                             setModal(() => filtered = List.from(TimeHelper.foreignTimezones));
@@ -239,15 +230,14 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                       ),
                     ),
                     subtitle: Text(tz, style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
-                    trailing: isSelected ? Icon(Icons.check_circle_rounded, color: cs.secondary, size: 20) : null,
+                    trailing: isSelected ? Icon(Icons.check_circle_rounded, color: cs.primary, size: 20) : null,
                     onTap: () {
                       setState(() {
                         _dynamicTz = tz;
                         _dynamicLabel = label;
-                        if (_sourceTz != 'Asia/Jakarta' && _sourceTz != 'Asia/Makassar' && _sourceTz != 'Asia/Jayapura') {
+                        if (isSource) {
                           _sourceTz = tz;
-                        }
-                        if (_targetTz != 'Asia/Jakarta' && _targetTz != 'Asia/Makassar' && _targetTz != 'Asia/Jayapura') {
+                        } else {
                           _targetTz = tz;
                         }
                         _result = null;
@@ -276,10 +266,9 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
     required Map<String, String> slot,
     required bool isSource,
     required bool isSelected,
+    required ColorScheme cs,
   }) {
-    final cs = Theme.of(context).colorScheme;
     final isDynamic = slot['tz'] != 'Asia/Jakarta' && slot['tz'] != 'Asia/Makassar' && slot['tz'] != 'Asia/Jayapura';
-    final activeColor = isSource ? cs.secondary : cs.primary;
 
     return GestureDetector(
       onTap: () {
@@ -293,9 +282,9 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor : cs.surfaceContainerHighest,
+          color: isSelected ? cs.primary : cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: isSelected ? activeColor : cs.outlineVariant),
+          border: Border.all(color: isSelected ? cs.primary : cs.outlineVariant),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -311,11 +300,11 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
             if (isDynamic) ...[
               const SizedBox(width: 6),
               GestureDetector(
-                onTap: _openForeignPicker,
+                onTap: () => _openForeignPicker(context, cs, isSource),
                 child: Icon(
                   Icons.edit_rounded,
                   size: 13,
-                  color: isSelected ? cs.onPrimary.withOpacity(0.8) : cs.secondary,
+                  color: isSelected ? cs.onPrimary.withOpacity(0.8) : cs.primary,
                 ),
               ),
             ],
@@ -325,8 +314,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
     );
   }
 
-  Widget _buildResultCard() {
-    final cs = Theme.of(context).colorScheme;
+  Widget _buildResultCard(ColorScheme cs) {
     final r = _result!;
     final srcLabel = TimeHelper.labelFromTz(r.fromTimezone);
     final tgtLabel = TimeHelper.labelFromTz(r.toTimezone);
@@ -334,7 +322,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cs.secondary, // Warna solid
+        color: cs.primary,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -342,43 +330,49 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
         children: [
           Text(
             '$srcLabel  -  ${r.sourceTime.format12h()}  ${_timeLabel(r.sourceTime.hour)}',
-            style: TextStyle(color: cs.onSecondary.withOpacity(0.8), fontSize: 13),
+            style: TextStyle(color: cs.onPrimary.withOpacity(0.8), fontSize: 13),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Row(children: [
-              Expanded(child: Container(height: 1, color: cs.onSecondary.withOpacity(0.3))),
+              Expanded(child: Container(height: 1, color: cs.onPrimary.withOpacity(0.3))),
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: _swapZones,
                 child: Container(
                   padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(color: cs.onSecondary.withOpacity(0.15), shape: BoxShape.circle),
-                  child: Icon(Icons.swap_vert_rounded, color: cs.onSecondary, size: 18),
+                  decoration: BoxDecoration(
+                    color: cs.onPrimary.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.swap_vert_rounded, color: cs.onPrimary, size: 18),
                 ),
               ),
               const SizedBox(width: 8),
-              Expanded(child: Container(height: 1, color: cs.onSecondary.withOpacity(0.3))),
+              Expanded(child: Container(height: 1, color: cs.onPrimary.withOpacity(0.3))),
             ]),
           ),
-          Text(tgtLabel, style: TextStyle(color: cs.onSecondary.withOpacity(0.8), fontSize: 13)),
+          Text(tgtLabel, style: TextStyle(color: cs.onPrimary.withOpacity(0.8), fontSize: 13)),
           const SizedBox(height: 6),
           Text(
             r.targetFormatted,
-            style: TextStyle(color: cs.onSecondary, fontSize: 36, fontWeight: FontWeight.bold),
+            style: TextStyle(color: cs.onPrimary, fontSize: 36, fontWeight: FontWeight.bold),
           ),
-          Text(_timeLabel(r.targetHour), style: TextStyle(color: cs.onSecondary.withOpacity(0.7), fontSize: 13)),
+          Text(_timeLabel(r.targetHour), style: TextStyle(color: cs.onPrimary.withOpacity(0.7), fontSize: 13)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: cs.onSecondary.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(
+              color: cs.onPrimary.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
             child: Text(
               '${r.fromOffset}  ke  ${r.toOffset}  (${r.diffLabel})',
-              style: TextStyle(color: cs.onSecondary.withOpacity(0.8), fontSize: 12),
+              style: TextStyle(color: cs.onPrimary.withOpacity(0.8), fontSize: 12),
             ),
           ),
           const SizedBox(height: 8),
-          Text(r.dataSourceLabel, style: TextStyle(color: cs.onSecondary.withOpacity(0.5), fontSize: 10)),
+          Text(r.dataSourceLabel, style: TextStyle(color: cs.onPrimary.withOpacity(0.5), fontSize: 10)),
         ],
       ),
     );
@@ -404,7 +398,10 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
             margin: const EdgeInsets.only(top: 12, bottom: 4),
             width: 40,
             height: 4,
-            decoration: BoxDecoration(color: cs.outlineVariant, borderRadius: BorderRadius.circular(2)),
+            decoration: BoxDecoration(
+              color: cs.outlineVariant,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -417,10 +414,10 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: cs.secondary.withOpacity(0.1),
+                        color: cs.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.schedule_rounded, color: cs.secondary, size: 20),
+                      child: Icon(Icons.schedule_rounded, color: cs.primary, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -450,6 +447,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                       slot: slot,
                       isSource: true,
                       isSelected: slot['tz'] == _sourceTz,
+                      cs: cs,
                     )).toList(),
                   ),
                   const SizedBox(height: 20),
@@ -462,7 +460,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                         initialTime: _selectedTime,
                         builder: (ctx, child) => Theme(
                           data: Theme.of(ctx).copyWith(
-                            colorScheme: Theme.of(ctx).colorScheme.copyWith(primary: cs.secondary),
+                            colorScheme: Theme.of(ctx).colorScheme.copyWith(primary: cs.primary),
                           ),
                           child: child!,
                         ),
@@ -483,7 +481,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                         border: Border.all(color: cs.outlineVariant),
                       ),
                       child: Row(children: [
-                        Icon(Icons.access_time_rounded, color: cs.secondary, size: 22),
+                        Icon(Icons.access_time_rounded, color: cs.primary, size: 22),
                         const SizedBox(width: 12),
                         Text(
                           _selectedTime.format(context),
@@ -492,7 +490,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                         const SizedBox(width: 8),
                         Text(_timeLabel(_selectedTime.hour), style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
                         const Spacer(),
-                        Icon(Icons.edit_rounded, color: cs.secondary, size: 18),
+                        Icon(Icons.edit_rounded, color: cs.primary, size: 18),
                       ]),
                     ),
                   ),
@@ -506,6 +504,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                       slot: slot,
                       isSource: false,
                       isSelected: slot['tz'] == _targetTz,
+                      cs: cs,
                     )).toList(),
                   ),
                   const SizedBox(height: 24),
@@ -526,7 +525,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                         style: TextStyle(color: cs.onPrimary, fontWeight: FontWeight.bold, fontSize: 15),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: cs.secondary,
+                        backgroundColor: cs.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                       ),
@@ -554,7 +553,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                                 onTap: _convert,
                                 child: Text(
                                   'Coba lagi',
-                                  style: TextStyle(color: cs.secondary, fontSize: 12, decoration: TextDecoration.underline),
+                                  style: TextStyle(color: cs.primary, fontSize: 12, decoration: TextDecoration.underline),
                                 ),
                               ),
                             ],
@@ -562,7 +561,7 @@ class _TimezoneConverterSheetState extends State<TimezoneConverterSheet> {
                         ),
                       ]),
                     ),
-                  if (_result != null) _buildResultCard(),
+                  if (_result != null) _buildResultCard(cs),
                 ],
               ),
             ),

@@ -21,11 +21,12 @@ class AppColors {
   static const Color surface     = Color(0xFFF4F7FB);
   static const Color surfaceCard = Color(0xFFEAF1F9);
 
-  // Dark mode surfaces
-  static const Color darkBg      = Color(0xFF0D1117);
-  static const Color darkSurface = Color(0xFF161B22);
-  static const Color darkCard    = Color(0xFF1C2431);
-  static const Color darkBorder  = Color(0xFF30363D);
+  // Dark mode surfaces 
+  static const Color darkBg      = Color(0xFF0D1117);      
+  static const Color darkSurface = Color(0xFF161B22);     
+  static const Color darkCard    = Color(0xFF21262D);      
+  static const Color darkBorder  = Color(0xFF30363D);    
+  static const Color darkCardElevated = Color(0xFF2D333B); 
 }
 
 class AppTheme {
@@ -164,10 +165,10 @@ class AppTheme {
         onSecondaryContainer: AppColors.periwinkle100,
         surface:          AppColors.darkSurface,
         onSurface:        Color(0xFFE6EDF4),
-        surfaceContainerHighest: AppColors.darkCard,
-        onSurfaceVariant: Color(0xFF8B9BB4),
+        surfaceContainerHighest: AppColors.darkCard,    // Background card lebih terang
+        onSurfaceVariant: Color(0xFFC9D1D9),            
         outline:          AppColors.darkBorder,
-        outlineVariant:   Color(0xFF21262D),
+        outlineVariant:   Color(0xFF30363D),
         error:            Color(0xFFFC8181),
         onError:          AppColors.darkBg,
         errorContainer:   Color(0xFF742A2A),
@@ -192,12 +193,13 @@ class AppTheme {
           letterSpacing: -0.3,
         ),
       ),
+  
       cardTheme: CardThemeData(
-        color: AppColors.darkCard,
+        color: AppColors.darkCard,          
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.darkBorder, width: 1),
+          side: BorderSide(color: AppColors.darkBorder, width: 1), 
         ),
         margin: EdgeInsets.zero,
       ),
@@ -296,8 +298,8 @@ class AppTheme {
     titleMedium:   TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFFC9D1D9)),
     titleSmall:    TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFC9D1D9)),
     bodyLarge:     TextStyle(fontSize: 16, fontWeight: FontWeight.w400, color: Color(0xFFC9D1D9), height: 1.6),
-    bodyMedium:    TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFF8B9BB4), height: 1.5),
-    bodySmall:     TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Color(0xFF6B7A94), height: 1.4),
+    bodyMedium:    TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Color(0xFFB0B8C5), height: 1.5),  // Dibuat lebih terang
+    bodySmall:     TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: Color(0xFF8B9BB4), height: 1.4),
     labelLarge:    TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFC9D1D9), letterSpacing: 0.1),
     labelMedium:   TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF8B9BB4), letterSpacing: 0.2),
     labelSmall:    TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Color(0xFF6B7A94), letterSpacing: 0.3),

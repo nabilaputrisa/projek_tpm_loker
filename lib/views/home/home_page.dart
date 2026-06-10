@@ -1,3 +1,5 @@
+// lib/views/home/home_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +8,6 @@ import '../../data/services/api_job_service.dart';
 import '../../widgets/job_card.dart';
 import '../home/job_detail_page.dart';
 import 'filter_bottom_sheet.dart';
-
 import '../tools/ai_consultant_page.dart';
 import '../games/memory_match_game.dart';
 import '../profile/profile_page.dart';
@@ -14,7 +15,6 @@ import '../profile/saved_jobs_page.dart';
 import '../interview/interview_page.dart';
 
 // ─── Main Navigation Shell ────────────────────────────────────────────────────
-
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
 
@@ -34,7 +34,10 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
+      backgroundColor: cs.surfaceContainerHighest,
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
@@ -104,7 +107,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
 }
 
 // ─── Nav Item Widget ──────────────────────────────────────────────────────────
-
 class _NavItem extends StatelessWidget {
   final int index;
   final int currentIndex;
@@ -166,7 +168,6 @@ class _NavItem extends StatelessWidget {
 }
 
 // ─── Home Tab ─────────────────────────────────────────────────────────────────
-
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
 
@@ -217,7 +218,7 @@ class _HomeTabState extends State<HomeTab> {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: cs.surfaceContainerHighest,
+      backgroundColor: cs.surfaceContainerHighest, // ✅ Background pakai tema
       appBar: AppBar(
         title: const Text(
           'Career Portal',
@@ -264,12 +265,14 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                         child: TextField(
                           controller: _searchController,
+                          style: TextStyle(color: cs.onSurface),
                           decoration: InputDecoration(
                             hintText: 'Search jobs...',
+                            hintStyle: TextStyle(color: cs.onSurfaceVariant),
                             prefixIcon: Icon(Icons.search, color: cs.primary),
                             suffixIcon: _searchController.text.isNotEmpty
                                 ? IconButton(
-                                    icon: const Icon(Icons.clear),
+                                    icon: Icon(Icons.clear, color: cs.onSurfaceVariant),
                                     onPressed: () {
                                       _searchController.clear();
                                       context.read<JobProvider>().setSearchQuery('');
@@ -320,6 +323,7 @@ class _HomeTabState extends State<HomeTab> {
                           _FilterChip(
                             label: '${country?.flag ?? ''} ${country?.name ?? provider.selectedCountry}',
                             onRemove: null,
+                            colorScheme: cs,
                           ),
                           if (provider.selectedLocation != 'Semua Lokasi')
                             _FilterChip(
@@ -328,6 +332,7 @@ class _HomeTabState extends State<HomeTab> {
                                 provider.setLocation('Semua Lokasi');
                                 provider.applyFilters();
                               },
+                              colorScheme: cs,
                             ),
                           if (provider.selectedCategory != 'Semua Kategori')
                             _FilterChip(
@@ -336,6 +341,7 @@ class _HomeTabState extends State<HomeTab> {
                                 provider.setCategory('Semua Kategori');
                                 provider.applyFilters();
                               },
+                              colorScheme: cs,
                             ),
                           if (provider.selectedSalaryRange != null)
                             _FilterChip(
@@ -344,6 +350,7 @@ class _HomeTabState extends State<HomeTab> {
                                 provider.setSalaryRange(null);
                                 provider.applyFilters();
                               },
+                              colorScheme: cs,
                             ),
                           if (provider.sortBy != 'date')
                             _FilterChip(
@@ -354,6 +361,7 @@ class _HomeTabState extends State<HomeTab> {
                                 provider.setSortBy('date');
                                 provider.applyFilters();
                               },
+                              colorScheme: cs,
                             ),
                         ],
                       ),
@@ -475,12 +483,16 @@ class _HomeTabState extends State<HomeTab> {
 }
 
 // ─── Active Filter Chip Widget ────────────────────────────────────────────────
-
 class _FilterChip extends StatelessWidget {
   final String label;
   final VoidCallback? onRemove;
+  final ColorScheme colorScheme;
 
-  const _FilterChip({required this.label, this.onRemove});
+  const _FilterChip({
+    required this.label,
+    required this.colorScheme,
+    this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -488,22 +500,22 @@ class _FilterChip extends StatelessWidget {
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: colorScheme.onPrimary.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.5)),
+        border: Border.all(color: colorScheme.onPrimary.withOpacity(0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
+            style: TextStyle(color: colorScheme.onPrimary, fontSize: 12),
           ),
           if (onRemove != null) ...[
             const SizedBox(width: 4),
             GestureDetector(
               onTap: onRemove,
-              child: const Icon(Icons.close, color: Colors.white, size: 14),
+              child: Icon(Icons.close, color: colorScheme.onPrimary, size: 14),
             ),
           ],
         ],

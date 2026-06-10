@@ -23,11 +23,6 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
   TimeOfDay? _selectedTime;
   bool _isLoading = false;
 
-  static const Color _primaryBlue = Color(0xFF2F80ED);
-  static const Color _bgColor = Color(0xFFEAF2FB);
-  static const Color _darkText = Color(0xFF1A2E44);
-  static const Color _subtleText = Color(0xFF7A92A8);
-
   bool get _isEditing => widget.interview != null;
 
   @override
@@ -53,21 +48,23 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: _bgColor,
+      backgroundColor: cs.surfaceContainerHighest,
       appBar: AppBar(
-        backgroundColor: _bgColor,
+        backgroundColor: cs.surfaceContainerHighest,
         elevation: 0,
         centerTitle: true,
         title: Text(
           _isEditing ? 'Edit Jadwal' : 'Tambah Jadwal',
-          style: const TextStyle(
-            color: _darkText,
+          style: TextStyle(
+            color: cs.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 18,
           ),
         ),
-        iconTheme: const IconThemeData(color: _darkText),
+        iconTheme: IconThemeData(color: cs.onSurface),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
@@ -76,36 +73,36 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeaderIllustration(),
+              _buildHeaderIllustration(cs),
               const SizedBox(height: 24),
-              _buildSectionLabel('Informasi Posisi'),
+              _buildSectionLabel(cs, 'Informasi Posisi'),
               const SizedBox(height: 12),
               _buildTextField(
+                cs,
                 controller: _jobTitleController,
                 hint: 'Posisi yang dilamar',
                 icon: Icons.work_outline,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Wajib diisi' : null,
+                validator: (v) => v == null || v.trim().isEmpty ? 'Wajib diisi' : null,
               ),
               const SizedBox(height: 12),
               _buildTextField(
+                cs,
                 controller: _companyController,
                 hint: 'Nama perusahaan',
                 icon: Icons.business_outlined,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Wajib diisi' : null,
+                validator: (v) => v == null || v.trim().isEmpty ? 'Wajib diisi' : null,
               ),
               const SizedBox(height: 24),
-              _buildSectionLabel('Waktu Interview'),
+              _buildSectionLabel(cs, 'Waktu Interview'),
               const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: _buildPickerTile(
+                      cs,
                       icon: Icons.calendar_today_outlined,
                       label: _selectedDate != null
-                          ? DateFormat('d MMM yyyy', 'id_ID')
-                              .format(_selectedDate!)
+                          ? DateFormat('d MMM yyyy', 'id_ID').format(_selectedDate!)
                           : 'Pilih Tanggal',
                       onTap: _pickDate,
                       filled: _selectedDate != null,
@@ -114,6 +111,7 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildPickerTile(
+                      cs,
                       icon: Icons.access_time,
                       label: _selectedTime != null
                           ? _selectedTime!.format(context)
@@ -129,21 +127,21 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
                   padding: const EdgeInsets.only(top: 6, left: 4),
                   child: Text(
                     _isLoading ? 'Tanggal & waktu wajib dipilih' : '',
-                    style: const TextStyle(
-                        color: Colors.redAccent, fontSize: 12),
+                    style: TextStyle(color: cs.error, fontSize: 12),
                   ),
                 ),
               const SizedBox(height: 24),
-              _buildSectionLabel('Catatan (Opsional)'),
+              _buildSectionLabel(cs, 'Catatan (Opsional)'),
               const SizedBox(height: 12),
               _buildTextField(
+                cs,
                 controller: _notesController,
                 hint: 'Tambahkan catatan, lokasi, atau persiapan...',
                 icon: Icons.notes_outlined,
                 maxLines: 4,
               ),
               const SizedBox(height: 36),
-              _buildSubmitButton(),
+              _buildSubmitButton(cs),
             ],
           ),
         ),
@@ -151,39 +149,40 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
     );
   }
 
-  Widget _buildHeaderIllustration() {
+  Widget _buildHeaderIllustration(ColorScheme cs) {
     return Center(
       child: Container(
         width: 72,
         height: 72,
         decoration: BoxDecoration(
-          color: _primaryBlue,
+          color: cs.primary,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: _primaryBlue.withOpacity(0.3),
+              color: cs.primary.withOpacity(0.3),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
           ],
         ),
-        child: const Icon(Icons.event_note, color: Colors.white, size: 32),
+        child: Icon(Icons.event_note, color: cs.onPrimary, size: 32),
       ),
     );
   }
 
-  Widget _buildSectionLabel(String label) {
+  Widget _buildSectionLabel(ColorScheme cs, String label) {
     return Text(
       label,
-      style: const TextStyle(
-        color: _darkText,
+      style: TextStyle(
+        color: cs.onSurface,
         fontWeight: FontWeight.w700,
         fontSize: 14,
       ),
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildTextField(
+    ColorScheme cs, {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -194,15 +193,13 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
       controller: controller,
       validator: validator,
       maxLines: maxLines,
-      style: const TextStyle(color: _darkText, fontSize: 14),
+      style: TextStyle(color: cs.onSurface, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: _subtleText, fontSize: 14),
-        prefixIcon: maxLines == 1
-            ? Icon(icon, color: _primaryBlue, size: 20)
-            : null,
+        hintStyle: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+        prefixIcon: maxLines == 1 ? Icon(icon, color: cs.primary, size: 20) : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: cs.surface,
         contentPadding: EdgeInsets.symmetric(
           horizontal: maxLines > 1 ? 16 : 0,
           vertical: maxLines > 1 ? 14 : 0,
@@ -217,23 +214,22 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: _primaryBlue, width: 1.5),
+          borderSide: BorderSide(color: cs.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: Colors.redAccent, width: 1.5),
+          borderSide: BorderSide(color: cs.error, width: 1.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide:
-              const BorderSide(color: Colors.redAccent, width: 1.5),
+          borderSide: BorderSide(color: cs.error, width: 1.5),
         ),
       ),
     );
   }
 
-  Widget _buildPickerTile({
+  Widget _buildPickerTile(
+    ColorScheme cs, {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -244,25 +240,21 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: filled ? _primaryBlue.withOpacity(0.08) : Colors.white,
+          color: filled ? cs.primary.withOpacity(0.08) : cs.surface,
           borderRadius: BorderRadius.circular(14),
-          border: filled
-              ? Border.all(color: _primaryBlue.withOpacity(0.4), width: 1.5)
-              : null,
+          border: filled ? Border.all(color: cs.primary.withOpacity(0.4), width: 1.5) : null,
         ),
         child: Row(
           children: [
-            Icon(icon,
-                color: filled ? _primaryBlue : _subtleText, size: 18),
+            Icon(icon, color: filled ? cs.primary : cs.onSurfaceVariant, size: 18),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 label,
                 style: TextStyle(
-                  color: filled ? _primaryBlue : _subtleText,
+                  color: filled ? cs.primary : cs.onSurfaceVariant,
                   fontSize: 13,
-                  fontWeight:
-                      filled ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: filled ? FontWeight.w600 : FontWeight.normal,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -273,31 +265,28 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(ColorScheme cs) {
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _submit,
         style: ElevatedButton.styleFrom(
-          backgroundColor: _primaryBlue,
-          disabledBackgroundColor: _primaryBlue.withOpacity(0.5),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
+          backgroundColor: cs.primary,
+          disabledBackgroundColor: cs.primary.withOpacity(0.5),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 0,
         ),
         child: _isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2.5),
+                child: CircularProgressIndicator(color: cs.onPrimary, strokeWidth: 2.5),
               )
             : Text(
                 _isEditing ? 'SIMPAN PERUBAHAN' : 'TAMBAH JADWAL',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: cs.onPrimary,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                   letterSpacing: 0.8,
@@ -309,6 +298,7 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
 
   Future<void> _pickDate() async {
     final now = DateTime.now();
+    final cs = Theme.of(context).colorScheme;
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? now,
@@ -316,10 +306,10 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
       lastDate: now.add(const Duration(days: 365)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: _primaryBlue,
-            onPrimary: Colors.white,
-            surface: Colors.white,
+          colorScheme: ColorScheme.light(
+            primary: cs.primary,
+            onPrimary: cs.onPrimary,
+            surface: cs.surface,
           ),
         ),
         child: child!,
@@ -331,15 +321,16 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
   }
 
   Future<void> _pickTime() async {
+    final cs = Theme.of(context).colorScheme;
     final picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime ?? TimeOfDay.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: _primaryBlue,
-            onPrimary: Colors.white,
-            surface: Colors.white,
+          colorScheme: ColorScheme.light(
+            primary: cs.primary,
+            onPrimary: cs.onPrimary,
+            surface: cs.surface,
           ),
         ),
         child: child!,
@@ -352,8 +343,8 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
 
   Future<void> _submit() async {
     final isFormValid = _formKey.currentState!.validate();
-    final isDateTimeValid =
-        _selectedDate != null && _selectedTime != null;
+    final isDateTimeValid = _selectedDate != null && _selectedTime != null;
+    final cs = Theme.of(context).colorScheme;
 
     if (!isFormValid || !isDateTimeValid) {
       setState(() => _isLoading = true);
@@ -380,18 +371,14 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
         id: widget.interview!.id!,
         jobTitle: _jobTitleController.text.trim(),
         companyName: _companyController.text.trim(),
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
         interviewDateTime: interviewDateTime,
       );
     } else {
       success = await provider.addInterview(
         jobTitle: _jobTitleController.text.trim(),
         companyName: _companyController.text.trim(),
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
+        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
         interviewDateTime: interviewDateTime,
       );
     }
@@ -403,15 +390,10 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _isEditing
-                ? 'Jadwal berhasil diperbarui'
-                : 'Jadwal berhasil ditambahkan',
-          ),
-          backgroundColor: _primaryBlue,
+          content: Text(_isEditing ? 'Jadwal berhasil diperbarui' : 'Jadwal berhasil ditambahkan'),
+          backgroundColor: cs.primary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
       Navigator.pop(context);
@@ -419,10 +401,9 @@ class _AddInterviewPageState extends State<AddInterviewPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.errorMessage ?? 'Terjadi kesalahan'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: cs.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
       provider.clearError();
