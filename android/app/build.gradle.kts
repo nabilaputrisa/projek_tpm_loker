@@ -4,6 +4,19 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+
+// Load secrets.properties file
+def secretsProperties = new Properties()
+def secretsFile = rootProject.file("secrets.properties")
+
+// Cek apakah file secrets.properties ada
+if (secretsFile.exists()) {
+    secretsProperties.load(new FileInputStream(secretsFile))
+    println "✅ secrets.properties loaded successfully"
+} else {
+    println "⚠️ secrets.properties not found. Google Maps API Key may not work."
+}
+
 android {
 
     namespace = "com.example.projektpm"
@@ -41,6 +54,14 @@ android {
 
         // MULTIDEX
         multiDexEnabled = true
+
+      
+        // Mengirim API key dari secrets.properties ke AndroidManifest.xml
+        manifestPlaceholders = [
+            mapsApiKey: secretsProperties.getProperty("MAPS_API_KEY", ""),
+            // Format: "MAPS_API_KEY" adalah key di secrets.properties
+            // "mapsApiKey" adalah placeholder di AndroidManifest.xml
+        ]
     }
 
     buildTypes {

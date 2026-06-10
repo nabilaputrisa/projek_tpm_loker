@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/job_model.dart';
+import '../../core/constants/api_keys.dart';
 
 class ApiJobService {
-  static const String _appId = '091323f3';
-  static const String _appKey = '1592c4f9b5d73ab7ef63f3ec54dd2de6';
+  static const String _appId = ApiKeys.adzunaAppId;
+  static const String _appKey = ApiKeys.adzunaAppKey;
   static const String _baseUrl = 'https://api.adzuna.com/v1/api/jobs';
 
   // ─── Country Config ────────────────────────────────────────────────────────

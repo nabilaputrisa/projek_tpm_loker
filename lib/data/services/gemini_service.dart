@@ -144,10 +144,6 @@ Panduan:
     _lastRequestTime = DateTime.now();
   }
 
-  // ─────────────────────────────────────────────
-  // REQUEST GEMINI
-  // ─────────────────────────────────────────────
-
   Future<String> _doRequest() async {
     final url = Uri.parse(
       '$_baseUrl?key=${ApiKeys.geminiApiKey}',

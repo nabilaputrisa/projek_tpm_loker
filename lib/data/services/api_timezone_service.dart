@@ -3,6 +3,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../../core/constants/api_keys.dart';
 
 // ─── MODEL CLASSES ───────────────────────────────────────────────────────────
 
@@ -163,8 +164,8 @@ class ApiTimezoneService {
         url, 
         headers: {
           'Content-Type': 'application/json',
-          'x-rapidapi-host': 'world-time-api3.p.rapidapi.com',
-          'x-rapidapi-key': '8ceb3105femshe88f376feb6fecfp1a6487jsnfd984cbe5520',
+          'x-rapidapi-host': '${ApiKeys.rapidApiHost}',
+          'x-rapidapi-key': '${ApiKeys.rapidApiKey}',
         },
       ).timeout(const Duration(seconds: 5));
 
