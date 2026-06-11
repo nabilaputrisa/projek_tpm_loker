@@ -27,8 +27,9 @@ class ChatMessage {
 }
 
 class GeminiService {
-  static const String _baseUrl =
-'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  // Gunakan ApiKeys untuk API key dan URL
+  
+  static final String _baseUrl = ApiKeys.geminiBaseUrl;
 
   static const String _systemPrompt = '''
 Kamu adalah **CareerBot AI**, asisten karir profesional dalam aplikasi pencari kerja.

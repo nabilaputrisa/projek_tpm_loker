@@ -408,7 +408,7 @@ class JobDetailPage extends StatelessWidget {
     try {
       // Konversi JobModel ke Map
       final jobMap = {
-        'id': job.id,
+        'job_id': job.id,
         'title': job.title,
         'company': job.company,
         'location': job.location,
